@@ -1,0 +1,37 @@
+{
+  "name": "@mafalda-sfu/mediasoup-node-tests",
+  "version": "0.0.0",
+  "description": "Node.js tests extracted from Mediasoup",
+  "exports": {
+    ".": "./index.js",
+    "./*": "./lib/tests/$1.js"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "tsc || exit 0; cp -R src/tests/data/ lib/tests/",
+    "prepare": "npm run build",
+    "update": "scripts/update.js"
+  },
+  "keywords": [
+    "Mediasoup",
+    "Mafalda",
+    "SFU",
+    "tests"
+  ],
+  "author": "Jesús Leganés-Combarro 'piranna' (https://piranna.github.io)",
+  "license": "ISC",
+  "dependencies": {
+    "h264-profile-level-id": "^1.0.1",
+    "pick-port": "^1.0.1",
+    "sctp": "^1.0.0"
+  },
+  "devDependencies": {
+    "@npmcli/package-json": "^4.0.1",
+    "@types/jest": "^29.5.3",
+    "@types/node": "^20.4.2",
+    "semver": "^7.5.4",
+    "simple-git": "^3.19.1",
+    "tar-stream": "^3.1.6",
+    "typescript": "^5.1.6"
+  }
+}

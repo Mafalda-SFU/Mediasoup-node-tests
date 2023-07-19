@@ -1,0 +1,31 @@
+name: nightly
+
+on:
+  schedule:
+  - cron: "0 0 * * *"
+  # Manual dispatch, only for testing purposes
+  # See https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow
+  workflow_dispatch:
+
+jobs:
+  nightly:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ssh-key: "${{secrets.COMMIT_KEY}}"
+
+      # Setup Node.js
+      - name: Node.js
+        uses: actions/setup-node@v3
+
+      # Config git user name and email
+      - name: Config git user name and email
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+      # Update tests
+      - name: Update tests
+        run: scripts/update.js
