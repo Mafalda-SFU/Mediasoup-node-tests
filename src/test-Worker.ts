@@ -1,7 +1,7 @@
 import * as os from 'os';
 import * as process from 'process';
 import * as path from 'path';
-import { InvalidStateError } from '../errors';
+import { InvalidStateError } from 'mediasoup/node/lib/errors';
 
 export default function(mediasoup): void
 {
@@ -13,6 +13,17 @@ export default function(mediasoup): void
 
 		beforeEach(() => worker && !worker.closed && worker.close());
 		afterEach(() => worker && !worker.closed && worker.close());
+
+		test('Worker.workerBin matches mediasoup-worker absolute path', async () =>
+		{
+			const workerBin = process.env.MEDIASOUP_WORKER_BIN
+				? process.env.MEDIASOUP_WORKER_BIN
+				: process.env.MEDIASOUP_BUILDTYPE === 'Debug'
+					? path.join(__dirname, '..', '..', '..', 'worker', 'out', 'Debug', 'mediasoup-worker')
+					: path.join(__dirname, '..', '..', '..', 'worker', 'out', 'Release', 'mediasoup-worker');
+
+			expect(mediasoup.workerBin).toBe(workerBin);
+		});
 
 		test('createWorker() succeeds', async () =>
 		{

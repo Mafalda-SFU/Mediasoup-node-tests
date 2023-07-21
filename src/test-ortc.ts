@@ -1,5 +1,5 @@
-import * as ortc from '../ortc';
-import { UnsupportedError } from '../errors';
+import * as ortc from 'mediasoup/node/lib/ortc';
+import { UnsupportedError } from 'mediasoup/node/lib/errors';
 
 export default function(mediasoup): void
 {

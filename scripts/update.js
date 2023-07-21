@@ -1,39 +1,30 @@
 #!/usr/bin/env node
 
-import {mkdir, rm, writeFile} from 'node:fs/promises';
-import {basename, dirname, sep} from 'node:path';
-import {Readable} from 'node:stream';
-import {text} from 'node:stream/consumers';
-import {createGunzip} from 'node:zlib';
+const {mkdir, rm, writeFile} = require('node:fs/promises');
+const {basename, dirname, sep} = require('node:path');
+const {Readable} = require('node:stream');
+const {text} = require('node:stream/consumers');
+const {createGunzip} = require('node:zlib');
 
-import PackageJson from '@npmcli/package-json';
-import gt from 'semver/functions/gt.js';
-import simpleGit from 'simple-git';
-import tar from 'tar-stream'
+const PackageJson = require('@npmcli/package-json');
+const lte = require('semver/functions/lte.js');
+const simpleGit = require('simple-git');
+const tar = require('tar-stream');
 
 
-const imports = [
-  'node/src/errors.ts',
-  'node/src/ortc.ts',
-  'node/src/RtpParameters.ts',
-  'node/src/SctpParameters.ts',
-  'node/src/scalabilityModes.ts',
-  'node/src/supportedRtpCapabilities.ts',
-  'node/src/utils.ts',
-  'node/tsconfig.json'
-]
 const options = {force: true, recursive: true}
 const repo = 'versatica/mediasoup';
-const testsFolder = 'node/src/tests';
 
-const [{tag_name: version, tarball_url}, pkgJson] = await Promise.all([
-  fetch(`https://api.github.com/repos/${repo}/releases/latest`)
-  .then(res => res.json()),
-  PackageJson.load('.')
-])
-
-if(gt(version, pkgJson.content.version))
+(async function()
 {
+  const [{tag_name: version, tarball_url}, pkgJson] = await Promise.all([
+    fetch(`https://api.github.com/repos/${repo}/releases/latest`)
+    .then(res => res.json()),
+    PackageJson.load('.')
+  ])
+
+  if(lte(version, pkgJson.content.version)) return
+
   const [{body}] = await Promise.all([
     fetch(tarball_url),
     rm('src', options)
@@ -48,12 +39,22 @@ if(gt(version, pkgJson.content.version))
 
     let path = name.split(sep)
     path.shift()
+    path.shift()
     path = path.join(sep)
 
-    if(imports.includes(path) || path.startsWith(testsFolder))
+    if(path === 'tsconfig.json')
+    {
+      const content = await text(entry);
+
+      await writeFile(path, content, 'utf8')
+      continue
+    }
+
+    if(path.startsWith('src/tests'))
     {
       let path2 = path.split(sep)
       path2.shift()
+      if(path2[0] === 'tests') path2[0] = 'src'
       path2 = path2.join(sep)
 
       switch(type)
@@ -66,17 +67,24 @@ if(gt(version, pkgJson.content.version))
           {
             let content = await text(entry);
 
-            if(dirname(path) === testsFolder)
+            if(dirname(path2) === 'src')
             {
               const lines = content.split('\n')
               content = []
 
               let indent = ''
 
-              for(const line of lines)
+              for(let line of lines)
               {
-                if(line.startsWith('import') && line.includes('mediasoup'))
-                  continue
+                if(line.startsWith('import'))
+                {
+                  if(line.includes('mediasoup')) continue
+
+                  if(line.includes('../errors'))
+                    line = line.replace('../errors', 'mediasoup/node/lib/errors')
+                  if(line.includes('../ortc'))
+                    line = line.replace('../ortc', 'mediasoup/node/lib/ortc')
+                }
 
                 if(!line.length || line.startsWith('import') || line.startsWith('//'))
                 {
@@ -142,3 +150,4 @@ if(gt(version, pkgJson.content.version))
     ])
   }
 }
+})()

@@ -1,4 +1,4 @@
-import { UnsupportedError } from '../errors';
+import { UnsupportedError } from 'mediasoup/node/lib/errors';
 
 export default function(mediasoup): void
 {

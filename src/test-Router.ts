@@ -1,4 +1,4 @@
-import { InvalidStateError } from '../errors';
+import { InvalidStateError } from 'mediasoup/node/lib/errors';
 
 export default function(mediasoup): void
 {

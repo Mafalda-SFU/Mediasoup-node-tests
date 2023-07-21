@@ -1,26 +1,77 @@
-import testActiveSpeakerObserver from '@mafalda-sfu/mediasoup-node-tests/test-ActiveSpeakerObserver'
-import testAudioLevelObserver from '@mafalda-sfu/mediasoup-node-tests/test-AudioLevelObserver'
-import testConsumer from '@mafalda-sfu/mediasoup-node-tests/test-consumer'
-import testDataConsumer from '@mafalda-sfu/mediasoup-node-tests/test-DataConsumer'
-import testDataProducer from '@mafalda-sfu/mediasoup-node-tests/test-DataProducer'
-import testDirectTransport from '@mafalda-sfu/mediasoup-node-tests/test-DirectTransport'
-import testMediasoup from '@mafalda-sfu/mediasoup-node-tests/test-mediasoup'
-import testMultiopus from '@mafalda-sfu/mediasoup-node-tests/test-multiopus'
-import testNodeSctp from '@mafalda-sfu/mediasoup-node-tests/test-node-sctp'
-import testOrtc from '@mafalda-sfu/mediasoup-node-tests/test-ortc'
-import testPipeTransport from '@mafalda-sfu/mediasoup-node-tests/test-PipeTransport'
-import testPlainTransport from '@mafalda-sfu/mediasoup-node-tests/test-PlainTransport'
-import testProducer from '@mafalda-sfu/mediasoup-node-tests/test-producer'
-import testRouter from '@mafalda-sfu/mediasoup-node-tests/test-Router'
-import testWebRtcServer from '@mafalda-sfu/mediasoup-node-tests/test-WebRtcServer'
-import testWebRtcTransport from '@mafalda-sfu/mediasoup-node-tests/test-WebRtcTransport'
-import testWorker from '@mafalda-sfu/mediasoup-node-tests/test-Worker'
+const {ok} = require('node:assert/strict')
+
+const {
+  default: testActiveSpeakerObserver
+} = require('@mafalda-sfu/mediasoup-node-tests/ActiveSpeakerObserver')
+const {
+  default: testAudioLevelObserver
+} = require('@mafalda-sfu/mediasoup-node-tests/AudioLevelObserver')
+const {
+  default: testConsumer
+} = require('@mafalda-sfu/mediasoup-node-tests/Consumer')
+const {
+  default: testDataConsumer
+} = require('@mafalda-sfu/mediasoup-node-tests/DataConsumer')
+const {
+  default: testDataProducer
+} = require('@mafalda-sfu/mediasoup-node-tests/DataProducer')
+const {
+  default: testDirectTransport
+} = require('@mafalda-sfu/mediasoup-node-tests/DirectTransport')
+const {
+  default: testMediasoup
+} = require('@mafalda-sfu/mediasoup-node-tests/mediasoup')
+const {
+  default: testMultiopus
+} = require('@mafalda-sfu/mediasoup-node-tests/multiopus')
+const {
+  default: testNodeSctp
+} = require('@mafalda-sfu/mediasoup-node-tests/node-sctp')
+const {
+  default: testOrtc
+} = require('@mafalda-sfu/mediasoup-node-tests/ortc')
+const {
+  default: testPipeTransport
+} = require('@mafalda-sfu/mediasoup-node-tests/PipeTransport')
+const {
+  default: testPlainTransport
+} = require('@mafalda-sfu/mediasoup-node-tests/PlainTransport')
+const {
+  default: testProducer
+} = require('@mafalda-sfu/mediasoup-node-tests/Producer')
+const {
+  default: testRouter
+} = require('@mafalda-sfu/mediasoup-node-tests/Router')
+const {
+  default: testWebRtcServer
+} = require('@mafalda-sfu/mediasoup-node-tests/WebRtcServer')
+const {
+  default: testWebRtcTransport
+} = require('@mafalda-sfu/mediasoup-node-tests/WebRtcTransport')
+const {
+  default: testWorker
+} = require('@mafalda-sfu/mediasoup-node-tests/Worker')
+const satisfies = require('semver/functions/satisfies')
+
+const {version} = require('./package.json')
 
 
-export default function(mediasoup)
+const range = `^${version}`
+
+
+module.exports = function(mediasoup)
 {
   describe('Mediasoup node tests', function()
   {
+    ok(
+      satisfies(mediasoup.version, range),
+      `mediasoup version mismatch (${mediasoup.version}, tests range: ${range})`
+    )
+
+    // HACK: Mediasoup tests have the worker binary path hardcoded based on the
+    //       tests directory. We need to override it.
+    process.env.MEDIASOUP_WORKER_BIN = mediasoup.workerBin
+
     testActiveSpeakerObserver(mediasoup)
     testAudioLevelObserver(mediasoup)
     testConsumer(mediasoup)
