@@ -133,21 +133,9 @@ const repo = 'versatica/mediasoup';
 
   const git = simpleGit()
   const {files: {length}} = await git.status()
+  if(!length) return
 
-  if(length)
-  {
-    pkgJson.update({version})
+  pkgJson.update({version})
 
-    await pkgJson.save()
-
-    await git.add('.')
-    await git.commit(`Update to mediasoup@${version}`)
-    await git.addTag(version)
-
-    await Promise.all([
-      git.push(),
-      git.pushTags()
-    ])
-  }
-}
+  await pkgJson.save()
 })()
