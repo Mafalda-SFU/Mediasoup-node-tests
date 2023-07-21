@@ -1,4 +1,5 @@
 .github/
+__tests__/
 scripts/
 src/
 *.tgz
