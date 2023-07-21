@@ -32,3 +32,7 @@ jobs:
       # Update tests
       - name: Update tests
         run: scripts/update.js
+
+      # Commit and push changes
+      - name: Commit and push changes
+        run: scripts/release.js

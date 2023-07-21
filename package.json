@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc; cp --recursive src/data/ lib/",
     "prepare": "npm run build",
-    "publish": "scripts/publish.js",
+    "release": "scripts/release.js",
     "test": "jest",
     "update": "scripts/update.js"
   },
