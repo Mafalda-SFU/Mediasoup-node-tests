@@ -9,6 +9,7 @@
   "scripts": {
     "build": "tsc; cp --recursive src/data/ lib/",
     "prepare": "npm run build",
+    "test": "jest",
     "update": "scripts/update.js"
   },
   "keywords": [
@@ -27,6 +28,7 @@
     "@npmcli/package-json": "^4.0.1",
     "@types/jest": "^29.5.3",
     "@types/node": "^20.4.2",
+    "jest": "^29.6.1",
     "simple-git": "^3.19.1",
     "tar-stream": "^3.1.6",
     "typescript": "^5.1.6"
