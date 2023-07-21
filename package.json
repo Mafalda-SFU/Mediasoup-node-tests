@@ -23,6 +23,8 @@
   "license": "ISC",
   "dependencies": {
     "mediasoup": "3.12.8",
+    "pick-port": "^1.0.1",
+    "sctp": "^1.0.0",
     "semver": "^7.5.4"
   },
   "devDependencies": {
