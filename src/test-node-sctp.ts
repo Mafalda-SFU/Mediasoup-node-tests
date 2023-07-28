@@ -8,7 +8,7 @@ export default function(mediasoup): void
 	{
 		const { createWorker } = mediasoup;
 
-// Set node-sctp default PMTU to 1200.
+		// Set node-sctp default PMTU to 1200.
 		sctp.defaults({ PMTU: 1200 });
 
 		let worker: mediasoup.types.Worker;

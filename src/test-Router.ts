@@ -1,7 +1,7 @@
-import { InvalidStateError } from 'mediasoup/node/lib/errors';
-
 export default function(mediasoup): void
 {
+	const { InvalidStateError } = mediasoup.types;
+
 	describe('Router', () =>
 	{
 		const { createWorker } = mediasoup;

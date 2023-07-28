@@ -1,7 +1,7 @@
-import { UnsupportedError } from 'mediasoup/node/lib/errors';
-
 export default function(mediasoup): void
 {
+	const { UnsupportedError } = mediasoup.types;
+
 	describe('Producer', () =>
 	{
 		const { createWorker } = mediasoup;

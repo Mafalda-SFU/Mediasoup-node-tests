@@ -72,28 +72,43 @@ const repo = 'versatica/mediasoup';
               const lines = content.split('\n')
               content = []
 
+              const imports = []
               let indent = ''
 
               for(let line of lines)
               {
-                if(line.startsWith('import'))
-                {
-                  if(line.includes('mediasoup')) continue
-
-                  if(line.includes('../errors'))
-                    line = line.replace('../errors', 'mediasoup/node/lib/errors')
-                  if(line.includes('../ortc'))
-                    line = line.replace('../ortc', 'mediasoup/node/lib/ortc')
-                }
-
-                if(!line.length || line.startsWith('import') || line.startsWith('//'))
+                if(!line.length)
                 {
                   content.push(line)
                   continue
                 }
 
-                if(!indent)
+                if(line.startsWith('import'))
                 {
+                  if(line.includes('mediasoup')) continue
+
+                  if(line.includes('../errors'))
+                  {
+                    imports.push(
+                      line
+                        .replace('import', 'const')
+                        .replace("from '../errors'", '= mediasoup.types')
+                    )
+                    continue
+                  }
+
+                  if(line.includes('../ortc'))
+                    line = line.replace('../ortc', 'mediasoup/node/lib/ortc')
+                }
+
+                else if(!indent)
+                {
+                  if(line.startsWith('//'))
+                  {
+                    content.push(line)
+                    continue
+                  }
+
                   indent = '\t\t'
 
                   if(!content[0]) content.shift()
@@ -104,6 +119,14 @@ const repo = 'versatica/mediasoup';
                   //       `typeof mediasoup`. It's only needed for Typescript
                   content.push('export default function(mediasoup): void')
                   content.push('{')
+
+                  if(imports.length)
+                  {
+                    for(const line of imports) content.push('\t' + line)
+
+                    content.push('')
+                  }
+
                   content.push(`\tdescribe('${describeName}', () =>`)
                   content.push('\t{')
                 }

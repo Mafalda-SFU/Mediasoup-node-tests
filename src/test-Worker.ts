@@ -1,10 +1,11 @@
 import * as os from 'os';
 import * as process from 'process';
 import * as path from 'path';
-import { InvalidStateError } from 'mediasoup/node/lib/errors';
 
 export default function(mediasoup): void
 {
+	const { InvalidStateError } = mediasoup.types;
+
 	describe('Worker', () =>
 	{
 		const { createWorker, observer } = mediasoup;

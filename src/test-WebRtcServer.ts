@@ -1,9 +1,10 @@
 // @ts-ignore
 import * as pickPort from 'pick-port';
-import { InvalidStateError } from 'mediasoup/node/lib/errors';
 
 export default function(mediasoup): void
 {
+	const { InvalidStateError } = mediasoup.types;
+
 	describe('WebRtcServer', () =>
 	{
 		const { createWorker } = mediasoup;

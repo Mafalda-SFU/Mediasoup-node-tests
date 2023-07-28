@@ -1,8 +1,9 @@
 import * as ortc from 'mediasoup/node/lib/ortc';
-import { UnsupportedError } from 'mediasoup/node/lib/errors';
 
 export default function(mediasoup): void
 {
+	const { UnsupportedError } = mediasoup.types;
+
 	describe('ortc', () =>
 	{
 		test('generateRouterRtpCapabilities() succeeds', () =>
