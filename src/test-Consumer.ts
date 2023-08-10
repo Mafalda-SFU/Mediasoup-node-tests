@@ -532,7 +532,7 @@ export default function(mediasoup): void
 			audioConsumer2.close();
 		}, 2000);
 
-		test('transport.consume() can be created with user provided mid', async () => 
+		test('transport.consume() can be created with user provided mid', async () =>
 		{
 			const audioConsumer1 = await transport2.consume(
 				{
