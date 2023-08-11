@@ -7,7 +7,8 @@ const {text} = require('node:stream/consumers');
 const {createGunzip} = require('node:zlib');
 
 const PackageJson = require('@npmcli/package-json');
-const lte = require('semver/functions/lte.js');
+const eq = require('semver/functions/eq.js');
+const lt = require('semver/functions/lt.js');
 const simpleGit = require('simple-git');
 const tar = require('tar-stream');
 
@@ -23,7 +24,14 @@ const repo = 'versatica/mediasoup';
     PackageJson.load('.')
   ])
 
-  if(lte(version, pkgJson.content.version)) return
+  if(lt(version, pkgJson.content.version))
+    throw new Error(
+      `Published mediasoup version ${version} is older than version ` +
+      `${pkgJson.content.version} from the package.json file. Maybe there's ` +
+      `a mistake in the package.json version?`
+    )
+
+  if(eq(version, pkgJson.content.version)) return
 
   const [{body}] = await Promise.all([
     fetch(tarball_url),
