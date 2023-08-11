@@ -176,4 +176,7 @@ const repo = 'versatica/mediasoup';
   })
 
   await pkgJson.save()
+
+  // Print version
+  console.log(version)
 })()

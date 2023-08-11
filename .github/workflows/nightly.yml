@@ -31,8 +31,30 @@ jobs:
 
       # Update tests
       - name: Update tests
-        run: scripts/update.js
+        id: update
+        run: echo "new_version=`scripts/update.js`" >> "$GITHUB_OUTPUT"
+
+      - name: Update dependencies
+        if : ${{ steps.update.outputs.new_version != '' }}
+        run: |
+          npx npm-check-updates -u
+          npm install --verbose
+
+      # Run tests
+      - name: Run tests
+        if : ${{ steps.update.outputs.new_version != '' }}
+        run: npm test
 
       # Commit and push changes
       - name: Commit and push changes
+        if : ${{ steps.update.outputs.new_version != '' }}
         run: scripts/release.js
+
+      # Create release
+      - name: Create release
+        if : ${{ steps.update.outputs.new_version != '' }}
+        run: |
+          gh release create \
+            v${{ steps.update.outputs.new_version }} \
+            --generate-notes \
+            --verify-tag
