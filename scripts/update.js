@@ -158,7 +158,22 @@ const repo = 'versatica/mediasoup';
   const {files: {length}} = await git.status()
   if(!length) return
 
-  pkgJson.update({version})
+  const {
+    content: {
+      dependencies, devDependencies, optionalDependencies, peerDependencies
+    }
+  } = pkgJson
+
+  pkgJson.update({
+    dependencies: {
+      ...dependencies,
+      mediasoup: version
+    },
+    devDependencies,
+    optionalDependencies,
+    peerDependencies,
+    version
+  })
 
   await pkgJson.save()
 })()
