@@ -58,3 +58,5 @@ jobs:
             v${{ steps.update.outputs.new_version }} \
             --generate-notes \
             --verify-tag
+        env:
+          GH_TOKEN: ${{ github.token }}
