@@ -560,6 +560,10 @@ export default function(mediasoup): void
 			expect(onObserverWebRtcTransportUnhandled).toHaveBeenCalledTimes(1);
 			expect(onObserverWebRtcTransportUnhandled).toHaveBeenCalledWith(transport);
 			expect(transport.closed).toBe(true);
+			expect(transport.iceState).toBe('closed');
+			expect(transport.iceSelectedTuple).toBe(undefined);
+			expect(transport.dtlsState).toBe('closed');
+			expect(transport.sctpState).toBe(undefined);
 			expect(webRtcServer.webRtcTransportsForTesting.size).toBe(0);
 			expect(router.transportsForTesting.size).toBe(0);
 
