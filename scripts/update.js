@@ -16,6 +16,7 @@ const tar = require('tar-stream');
 const options = {force: true, recursive: true}
 const repo = 'versatica/mediasoup';
 
+
 (async function()
 {
   const [{tag_name: version, tarball_url}, pkgJson] = await Promise.all([
@@ -93,8 +94,11 @@ const repo = 'versatica/mediasoup';
 
                 if(line.startsWith('import'))
                 {
+                  // Ignore imports of mediasoup, since we are going to do
+                  // dependency injection.
                   if(line.includes('mediasoup')) continue
 
+                  // Replace imports of mediasoup types.
                   if(line.includes('../errors'))
                   {
                     imports.push(

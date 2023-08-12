@@ -40,7 +40,7 @@ jobs:
           npx npm-check-updates -u
           npm install --verbose
 
-      # Run tests
+      # Ensure extracted tests are working
       - name: Run tests
         if : ${{ steps.update.outputs.new_version != '' }}
         run: npm test
@@ -48,7 +48,7 @@ jobs:
       # Commit and push changes
       - name: Commit and push changes
         if : ${{ steps.update.outputs.new_version != '' }}
-        run: scripts/release.js
+        run: npm run release
 
       # Create release
       - name: Create release
