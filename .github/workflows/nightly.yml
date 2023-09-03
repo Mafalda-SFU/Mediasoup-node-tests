@@ -32,8 +32,13 @@ jobs:
       # Update tests
       - name: Update tests
         id: update
-        run: echo "new_version=`scripts/update.js`" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "old version: `node -p \"require('./package.json').version\"`"
+          new_version=`scripts/update.js`
+          echo "new version: ${new_version}"
+          echo "new_version=${new_version}" >> "$GITHUB_OUTPUT"
 
+      # Update dependencies
       - name: Update dependencies
         if : ${{ steps.update.outputs.new_version != '' }}
         run: |
