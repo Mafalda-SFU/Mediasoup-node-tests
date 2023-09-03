@@ -17,6 +17,12 @@ const options = {force: true, recursive: true}
 const repo = 'versatica/mediasoup';
 
 
+function filterOrtcUnsuportedError(line)
+{
+  return this.toString() !== 'ortc' || !line.includes('UnsupportedError')
+}
+
+
 (async function()
 {
   const [{tag_name: version, tarball_url}, pkgJson] = await Promise.all([
@@ -81,7 +87,8 @@ const repo = 'versatica/mediasoup';
               const lines = content.split('\n')
               content = []
 
-              const imports = []
+              let describeName
+              let imports = []
               let indent = ''
 
               for(let line of lines)
@@ -125,12 +132,16 @@ const repo = 'versatica/mediasoup';
 
                   if(!content[0]) content.shift()
 
-                  const describeName = basename(path2, '.ts').slice(5)
+                  describeName = basename(path2, '.ts').slice(5)
 
                   // TODO: generate type for `mediasoup`, or use
                   //       `typeof mediasoup`. It's only needed for Typescript
                   content.push('export default function(mediasoup): void')
                   content.push('{')
+
+                  imports = imports.filter(
+                    filterOrtcUnsuportedError, describeName
+                  )
 
                   if(imports.length)
                   {
@@ -141,6 +152,12 @@ const repo = 'versatica/mediasoup';
 
                   content.push(`\tdescribe('${describeName}', () =>`)
                   content.push('\t{')
+                }
+
+                else if(describeName === 'ortc')
+                {
+                  if(line.includes('.toThrow(UnsupportedError)'))
+                    line = line.replace('UnsupportedError', '')
                 }
 
                 content.push(indent + line)
