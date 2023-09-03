@@ -179,7 +179,7 @@ const repo = 'versatica/mediasoup';
   pkgJson.update({
     dependencies: {
       ...dependencies,
-      mediasoup: version
+      mediasoup: `^${version}`
     },
     devDependencies,
     optionalDependencies,
