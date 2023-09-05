@@ -35,5 +35,17 @@
     "simple-git": "^3.19.1",
     "tar-stream": "^3.1.6",
     "typescript": "^5.2.2"
-  }
+  },
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Mafalda-SFU/Mediasoup-node-tests.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Mafalda-SFU/Mediasoup-node-tests/issues"
+  },
+  "homepage": "https://mafalda.io/Mediasoup-node-tests"
 }
