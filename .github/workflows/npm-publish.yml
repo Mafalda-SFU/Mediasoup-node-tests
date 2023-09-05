@@ -7,6 +7,9 @@ name: Node.js Package
 on:
   release:
     types: [created]
+  # Manual dispatch, only for testing purposes. See
+  # https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow
+  workflow_dispatch:
 
 jobs:
   build-and-test:
@@ -56,7 +59,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
 
-  publish-github-release:
+  upload-to-github-release:
     needs: build-and-test
     runs-on: ubuntu-latest
 
