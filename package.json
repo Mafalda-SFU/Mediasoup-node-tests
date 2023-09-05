@@ -7,7 +7,7 @@
     "./*": "./lib/test-*.js"
   },
   "scripts": {
-    "build": "tsc; cp --recursive src/data/ lib/",
+    "build": "tsc 1> /dev/null; cp --recursive src/data/ lib/",
     "prepare": "npm run build",
     "release": "scripts/release.js",
     "test": "jest",
