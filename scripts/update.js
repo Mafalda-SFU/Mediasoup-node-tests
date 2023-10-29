@@ -22,11 +22,21 @@ function filterOrtcUnsuportedError(line)
   return this.toString() !== 'ortc' || !line.includes('UnsupportedError')
 }
 
+function isNotRustRelease({tag_name})
+{
+  return !tag_name.startsWith('rust-')
+}
+
 
 (async function()
 {
+  const releases = await fetch(`https://api.github.com/repos/${repo}/releases`)
+    .then(res => res.json())
+
+  const {url} = releases.find(isNotRustRelease)
+
   const [{tag_name: version, tarball_url}, pkgJson] = await Promise.all([
-    fetch(`https://api.github.com/repos/${repo}/releases/latest`)
+    fetch(url)
     .then(res => res.json()),
     PackageJson.load('.')
   ])
