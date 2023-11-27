@@ -144,6 +144,16 @@ function isNotRustRelease({tag_name})
 
                   describeName = basename(path2, '.ts').slice(5)
 
+                  if(describeName === 'Worker')
+                  {
+                    content.push('const skipIfHasVirtualPids =')
+                    content.push('  process.env.HAS_VIRTUAL_PIDS')
+                    content.push('    ? test.skip')
+                    content.push('    : test')
+
+                    content.push('')
+                  }
+
                   // TODO: generate type for `mediasoup`, or use
                   //       `typeof mediasoup`. It's only needed for Typescript
                   content.push('export default function(mediasoup): void')
@@ -168,6 +178,13 @@ function isNotRustRelease({tag_name})
                 {
                   if(line.includes('.toThrow(UnsupportedError)'))
                     line = line.replace('UnsupportedError', '')
+                }
+
+                else if(describeName === 'Worker')
+                {
+                  if(line.includes('Worker emits "died" if worker process died')
+                  || line.includes('worker process ignores PIPE, HUP, ALRM,'))
+                    line = line.replace('test', 'skipIfHasVirtualPids')
                 }
 
                 content.push(indent + line)
