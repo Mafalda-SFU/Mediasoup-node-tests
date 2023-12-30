@@ -127,7 +127,9 @@ function isNotRustRelease({tag_name})
                   }
 
                   if(line.includes('../ortc'))
-                    line = line.replace('../ortc', 'mediasoup/node/lib/ortc')
+                    line = line.replace(
+                      '../ortc', '@mafalda-sfu/mediasoup-ortc'
+                    )
                 }
 
                 else if(!indent)
