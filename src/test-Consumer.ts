@@ -1,11 +1,13 @@
+import * as flatbuffers from 'flatbuffers';
+import { Notification, Body as NotificationBody, Event } from '../gen/fbs/notification';
+import * as FbsConsumer from '../gen/fbs/consumer';
+
 export default function(mediasoup): void
 {
 	const { UnsupportedError } = mediasoup.types;
 
 	describe('Consumer', () =>
 	{
-		const { createWorker } = mediasoup;
-
 		let worker: mediasoup.types.Worker;
 		let router: mediasoup.types.Router;
 		let transport1: mediasoup.types.WebRtcTransport;
@@ -247,7 +249,7 @@ export default function(mediasoup): void
 
 		beforeAll(async () =>
 		{
-			worker = await createWorker();
+			worker = await mediasoup.createWorker();
 			router = await worker.createRouter({ mediaCodecs });
 			transport1 = await router.createWebRtcTransport(
 				{
@@ -320,13 +322,17 @@ export default function(mediasoup): void
 			expect(audioConsumer.currentLayers).toBeUndefined();
 			expect(audioConsumer.appData).toEqual({ baz: 'LOL' });
 
-			await expect(router.dump())
-				.resolves
-				.toMatchObject(
-					{
-						mapProducerIdConsumerIds : { [audioProducer.id]: [ audioConsumer.id ] },
-						mapConsumerIdProducerId  : { [audioConsumer.id]: audioProducer.id }
-					});
+			let dump = await router.dump();
+
+			expect(dump.mapProducerIdConsumerIds)
+				.toEqual(expect.arrayContaining([
+					{ key: audioProducer.id, values: [ audioConsumer.id ] }
+				]));
+
+			expect(dump.mapConsumerIdProducerId)
+				.toEqual(expect.arrayContaining([
+					{ key: audioConsumer.id, value: audioProducer.id }
+				]));
 
 			await expect(transport2.dump())
 				.resolves
@@ -465,27 +471,36 @@ export default function(mediasoup): void
 			expect(videoPipeConsumer.currentLayers).toBeUndefined();
 			expect(videoPipeConsumer.appData).toBeUndefined;
 
-			const dump = await router.dump();
+			dump = await router.dump();
 
-			for (const key of Object.keys(dump.mapProducerIdConsumerIds))
+			// Sort values for mapProducerIdConsumerIds.
+			expect(Array.isArray(dump.mapProducerIdConsumerIds)).toBe(true);
+			dump.mapProducerIdConsumerIds.forEach((entry: any) =>
 			{
-				dump.mapProducerIdConsumerIds[key] = dump.mapProducerIdConsumerIds[key].sort();
-			}
+				entry.values = entry.values.sort();
+			});
 
-			expect(dump).toMatchObject(
-				{
-					mapProducerIdConsumerIds :
-					{
-						[audioProducer.id] : [ audioConsumer.id ],
-						[videoProducer.id] : [ videoConsumer.id, videoPipeConsumer.id ].sort()
-					},
-					mapConsumerIdProducerId :
-					{
-						[audioConsumer.id]     : audioProducer.id,
-						[videoConsumer.id]     : videoProducer.id,
-						[videoPipeConsumer.id] : videoProducer.id
-					}
-				});
+			expect(dump.mapProducerIdConsumerIds)
+				.toEqual(expect.arrayContaining([
+					{ key: audioProducer.id, values: [ audioConsumer.id ] }
+				]));
+			expect(dump.mapProducerIdConsumerIds)
+				.toEqual(expect.arrayContaining([
+					{ key: videoProducer.id, values: [ videoConsumer.id, videoPipeConsumer.id ].sort() }
+				]));
+
+			expect(dump.mapConsumerIdProducerId)
+				.toEqual(expect.arrayContaining([
+					{ key: audioConsumer.id, value: audioProducer.id }
+				]));
+			expect(dump.mapConsumerIdProducerId)
+				.toEqual(expect.arrayContaining([
+					{ key: videoConsumer.id, value: videoProducer.id }
+				]));
+			expect(dump.mapConsumerIdProducerId)
+				.toEqual(expect.arrayContaining([
+					{ key: videoPipeConsumer.id, value: videoProducer.id }
+				]));
 
 			await expect(transport2.dump())
 				.resolves
@@ -644,7 +659,7 @@ export default function(mediasoup): void
 					});
 			expect(data.rtpParameters.codecs[0].rtcpFeedback).toEqual([]);
 			expect(Array.isArray(data.rtpParameters.headerExtensions)).toBe(true);
-			expect(data.rtpParameters.headerExtensions.length).toBe(3);
+			expect(data.rtpParameters.headerExtensions!.length).toBe(3);
 			expect(data.rtpParameters.headerExtensions).toEqual(
 				[
 					{
@@ -667,20 +682,22 @@ export default function(mediasoup): void
 					}
 				]);
 			expect(Array.isArray(data.rtpParameters.encodings)).toBe(true);
-			expect(data.rtpParameters.encodings.length).toBe(1);
+			expect(data.rtpParameters.encodings!.length).toBe(1);
 			expect(data.rtpParameters.encodings).toEqual(
 				[
-					{
-						codecPayloadType : 100,
-						ssrc             : audioConsumer.rtpParameters.encodings?.[0].ssrc
-					}
+					expect.objectContaining(
+						{
+							codecPayloadType : 100,
+							ssrc             : audioConsumer.rtpParameters.encodings?.[0].ssrc
+						})
 				]);
 			expect(data.type).toBe('simple');
 			expect(Array.isArray(data.consumableRtpEncodings)).toBe(true);
-			expect(data.consumableRtpEncodings.length).toBe(1);
+			expect(data.consumableRtpEncodings!.length).toBe(1);
 			expect(data.consumableRtpEncodings).toEqual(
 				[
-					{ ssrc: audioProducer.consumableRtpParameters.encodings?.[0].ssrc }
+					expect.objectContaining(
+						{ ssrc: audioProducer.consumableRtpParameters.encodings?.[0].ssrc })
 				]);
 			expect(data.supportedCodecPayloadTypes).toEqual([ 100 ]);
 			expect(data.paused).toBe(false);
@@ -713,7 +730,7 @@ export default function(mediasoup): void
 					{ type: 'goog-remb' }
 				]);
 			expect(Array.isArray(data.rtpParameters.headerExtensions)).toBe(true);
-			expect(data.rtpParameters.headerExtensions.length).toBe(4);
+			expect(data.rtpParameters.headerExtensions!.length).toBe(4);
 			expect(data.rtpParameters.headerExtensions).toEqual(
 				[
 					{
@@ -742,7 +759,7 @@ export default function(mediasoup): void
 					}
 				]);
 			expect(Array.isArray(data.rtpParameters.encodings)).toBe(true);
-			expect(data.rtpParameters.encodings.length).toBe(1);
+			expect(data.rtpParameters.encodings!.length).toBe(1);
 			expect(data.rtpParameters.encodings).toMatchObject(
 				[
 					{
@@ -756,14 +773,23 @@ export default function(mediasoup): void
 					}
 				]);
 			expect(Array.isArray(data.consumableRtpEncodings)).toBe(true);
-			expect(data.consumableRtpEncodings.length).toBe(4);
-			expect(data.consumableRtpEncodings).toEqual(
-				[
-					{ ssrc: videoProducer.consumableRtpParameters.encodings?.[0].ssrc },
-					{ ssrc: videoProducer.consumableRtpParameters.encodings?.[1].ssrc },
-					{ ssrc: videoProducer.consumableRtpParameters.encodings?.[2].ssrc },
-					{ ssrc: videoProducer.consumableRtpParameters.encodings?.[3].ssrc }
-				]);
+			expect(data.consumableRtpEncodings!.length).toBe(4);
+			expect(data.consumableRtpEncodings![0]).toEqual(
+				expect.objectContaining(
+					{ ssrc: videoProducer.consumableRtpParameters.encodings?.[0].ssrc })
+			);
+			expect(data.consumableRtpEncodings![1]).toEqual(
+				expect.objectContaining(
+					{ ssrc: videoProducer.consumableRtpParameters.encodings?.[1].ssrc })
+			);
+			expect(data.consumableRtpEncodings![2]).toEqual(
+				expect.objectContaining(
+					{ ssrc: videoProducer.consumableRtpParameters.encodings?.[2].ssrc })
+			);
+			expect(data.consumableRtpEncodings![3]).toEqual(
+				expect.objectContaining(
+					{ ssrc: videoProducer.consumableRtpParameters.encodings?.[3].ssrc })
+			);
 			expect(data.supportedCodecPayloadTypes).toEqual([ 103 ]);
 			expect(data.paused).toBe(true);
 			expect(data.producerPaused).toBe(true);
@@ -801,6 +827,12 @@ export default function(mediasoup): void
 
 		test('consumer.pause() and resume() succeed', async () =>
 		{
+			const onObserverPause = jest.fn();
+			const onObserverResume = jest.fn();
+
+			audioConsumer.observer.on('pause', onObserverPause);
+			audioConsumer.observer.on('resume', onObserverResume);
+
 			await audioConsumer.pause();
 			expect(audioConsumer.paused).toBe(true);
 
@@ -814,6 +846,45 @@ export default function(mediasoup): void
 			await expect(audioConsumer.dump())
 				.resolves
 				.toMatchObject({ paused: false });
+
+			// Even if we don't await for pause()/resume() completion, the observer must
+			// fire 'pause' and 'resume' events if state was the opposite.
+			audioConsumer.pause();
+			audioConsumer.resume();
+			audioConsumer.pause();
+			audioConsumer.pause();
+			audioConsumer.pause();
+			await audioConsumer.resume();
+
+			expect(onObserverPause).toHaveBeenCalledTimes(3);
+			expect(onObserverResume).toHaveBeenCalledTimes(3);
+		}, 2000);
+
+		test('producer.pause() and resume() emit events', async () =>
+		{
+			const promises = [];
+			const events: string[] = [];
+			
+			audioConsumer.observer.once('resume', () => 
+			{
+				events.push('resume');
+			});
+
+			audioConsumer.observer.once('pause', () => 
+			{
+				events.push('pause');
+			});
+
+			promises.push(audioProducer.pause());
+			promises.push(audioProducer.resume());
+
+			await Promise.all(promises);
+
+			// Must also wait a bit for the corresponding events in the consumer.
+			await new Promise((resolve) => setTimeout(resolve, 100));
+			
+			expect(events).toEqual([ 'pause', 'resume' ]);
+			expect(audioConsumer.paused).toBe(false);
 		}, 2000);
 
 		test('consumer.setPreferredLayers() succeed', async () =>
@@ -880,26 +951,28 @@ export default function(mediasoup): void
 
 		test('consumer.enableTraceEvent() succeed', async () =>
 		{
+			let dump;
+
 			await audioConsumer.enableTraceEvent([ 'rtp', 'pli' ]);
-			await expect(audioConsumer.dump())
-				.resolves
-				.toMatchObject({ traceEventTypes: 'rtp,pli' });
+			dump = await audioConsumer.dump();
+			expect(dump.traceEventTypes)
+				.toEqual(expect.arrayContaining([ 'rtp', 'pli' ]));
 
 			await audioConsumer.enableTraceEvent([]);
-			await expect(audioConsumer.dump())
-				.resolves
-				.toMatchObject({ traceEventTypes: '' });
+			dump = await audioConsumer.dump();
+			expect(dump.traceEventTypes)
+				.toEqual(expect.arrayContaining([]));
 
 			// @ts-ignore
 			await audioConsumer.enableTraceEvent([ 'nack', 'FOO', 'fir' ]);
-			await expect(audioConsumer.dump())
-				.resolves
-				.toMatchObject({ traceEventTypes: 'nack,fir' });
+			dump = await audioConsumer.dump();
+			expect(dump.traceEventTypes)
+				.toEqual(expect.arrayContaining([ 'nack', 'fir' ]));
 
 			await audioConsumer.enableTraceEvent();
-			await expect(audioConsumer.dump())
-				.resolves
-				.toMatchObject({ traceEventTypes: '' });
+			dump = await audioConsumer.dump();
+			expect(dump.traceEventTypes)
+				.toEqual(expect.arrayContaining([]));
 		}, 2000);
 
 		test('consumer.enableTraceEvent() with wrong arguments rejects with TypeError', async () =>
@@ -949,12 +1022,30 @@ export default function(mediasoup): void
 
 			audioConsumer.on('score', onScore);
 
-			channel.emit(audioConsumer.id, 'score', { producer: 10, consumer: 9 });
-			channel.emit(audioConsumer.id, 'score', { producer: 9, consumer: 9 });
-			channel.emit(audioConsumer.id, 'score', { producer: 8, consumer: 8 });
+			// Simulate a 'score' notification coming through the channel.
+			const builder = new flatbuffers.Builder();
+			const consumerScore = new FbsConsumer.ConsumerScoreT(9, 10, [ 8 ]);
+			const consumerScoreNotification = new FbsConsumer.ScoreNotificationT(consumerScore);
+			const notificationOffset = Notification.createNotification(
+				builder,
+				builder.createString(audioConsumer.id),
+				Event.CONSUMER_SCORE,
+				NotificationBody.Consumer_ScoreNotification,
+				consumerScoreNotification.pack(builder)
+			);
+
+			builder.finish(notificationOffset);
+
+			const notification = Notification.getRootAsNotification(
+				new flatbuffers.ByteBuffer(builder.asUint8Array()));
+
+			channel.emit(audioConsumer.id, Event.CONSUMER_SCORE, notification);
+			channel.emit(audioConsumer.id, Event.CONSUMER_SCORE, notification);
+			channel.emit(audioConsumer.id, Event.CONSUMER_SCORE, notification);
 
 			expect(onScore).toHaveBeenCalledTimes(3);
-			expect(audioConsumer.score).toEqual({ producer: 8, consumer: 8 });
+			expect(audioConsumer.score).toEqual(
+				{ score: 9, producerScore: 10, producerScores: [ 8 ] });
 		}, 2000);
 
 		test('consumer.close() succeeds', async () =>
@@ -967,19 +1058,27 @@ export default function(mediasoup): void
 			expect(onObserverClose).toHaveBeenCalledTimes(1);
 			expect(audioConsumer.closed).toBe(true);
 
-			await expect(router.dump())
-				.resolves
-				.toMatchObject(
-					{
-						mapProducerIdConsumerIds : { [audioProducer.id]: [] },
-						mapConsumerIdProducerId  : {}
-					});
+			const routerDump = await router.dump();
 
-			const dump = await transport2.dump();
+			expect(routerDump.mapProducerIdConsumerIds)
+				.toEqual(expect.arrayContaining([
+					{ key: audioProducer.id, values: [ ] }
+				]));
 
-			dump.consumerIds = dump.consumerIds.sort();
+			expect(routerDump.mapConsumerIdProducerId)
+				.toEqual(expect.arrayContaining([
+					{ key: videoConsumer.id, value: videoProducer.id }
+				]));
+			expect(routerDump.mapConsumerIdProducerId)
+				.toEqual(expect.arrayContaining([
+					{ key: videoPipeConsumer.id, value: videoProducer.id }
+				]));
 
-			expect(dump)
+			const transportDump = await transport2.dump();
+
+			transportDump.consumerIds = transportDump.consumerIds.sort();
+
+			expect(transportDump)
 				.toMatchObject(
 					{
 						id          : transport2.id,

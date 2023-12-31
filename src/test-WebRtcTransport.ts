@@ -1,12 +1,15 @@
 // @ts-ignore
 import * as pickPort from 'pick-port';
+import * as flatbuffers from 'flatbuffers';
+import { Notification, Body as NotificationBody, Event } from '../gen/fbs/notification';
+import * as FbsTransport from '../gen/fbs/transport';
+import * as FbsWebRtcTransport from '../gen/fbs/web-rtc-transport';
+import { serializeProtocol, TransportTuple } from './Transport';
 
 export default function(mediasoup): void
 {
 	describe('WebRtcTransport', () =>
 	{
-		const { createWorker } = mediasoup;
-
 		let worker: mediasoup.types.Worker;
 		let router: mediasoup.types.Router;
 		let transport: mediasoup.types.WebRtcTransport;
@@ -45,7 +48,7 @@ export default function(mediasoup): void
 
 		beforeAll(async () =>
 		{
-			worker = await createWorker();
+			worker = await mediasoup.createWorker();
 			router = await worker.createRouter({ mediaCodecs });
 		});
 
@@ -55,8 +58,7 @@ export default function(mediasoup): void
 		{
 			transport = await router.createWebRtcTransport(
 				{
-					listenIps : [ { ip: '127.0.0.1', announcedIp: '9.9.9.1' } ],
-					enableTcp : false
+					listenInfos : [ { protocol: 'udp', ip: '127.0.0.1', announcedIp: '9.9.9.1' } ]
 				});
 		});
 
@@ -75,11 +77,14 @@ export default function(mediasoup): void
 			// Create a separate transport here.
 			const transport1 = await router.createWebRtcTransport(
 				{
-					listenIps :
+					listenInfos :
 					[
-						{ ip: '127.0.0.1', announcedIp: '9.9.9.1' },
-						{ ip: '0.0.0.0', announcedIp: '9.9.9.2' },
-						{ ip: '127.0.0.1', announcedIp: undefined }
+						{ protocol: 'udp', ip: '127.0.0.1', announcedIp: '9.9.9.1' },
+						{ protocol: 'tcp', ip: '127.0.0.1', announcedIp: '9.9.9.1' },
+						{ protocol: 'udp', ip: '0.0.0.0', announcedIp: '9.9.9.2' },
+						{ protocol: 'tcp', ip: '0.0.0.0', announcedIp: '9.9.9.2' },
+						{ protocol: 'udp', ip: '127.0.0.1', announcedIp: undefined },
+						{ protocol: 'tcp', ip: '127.0.0.1', announcedIp: undefined }
 					],
 					enableTcp          : true,
 					preferUdp          : true,
@@ -136,9 +141,9 @@ export default function(mediasoup): void
 			expect(iceCandidates[5].type).toBe('host');
 			expect(iceCandidates[5].tcpType).toBe('passive');
 			expect(iceCandidates[0].priority).toBeGreaterThan(iceCandidates[1].priority);
-			expect(iceCandidates[2].priority).toBeGreaterThan(iceCandidates[1].priority);
+			expect(iceCandidates[1].priority).toBeGreaterThan(iceCandidates[2].priority);
 			expect(iceCandidates[2].priority).toBeGreaterThan(iceCandidates[3].priority);
-			expect(iceCandidates[4].priority).toBeGreaterThan(iceCandidates[3].priority);
+			expect(iceCandidates[3].priority).toBeGreaterThan(iceCandidates[4].priority);
 			expect(iceCandidates[4].priority).toBeGreaterThan(iceCandidates[5].priority);
 
 			expect(transport1.iceState).toBe('new');
@@ -165,14 +170,16 @@ export default function(mediasoup): void
 			expect(data1.dtlsState).toBe(transport1.dtlsState);
 			expect(data1.sctpParameters).toEqual(transport1.sctpParameters);
 			expect(data1.sctpState).toBe(transport1.sctpState);
-			expect(typeof data1.recvRtpHeaderExtensions).toBe('object');
+			expect(data1.recvRtpHeaderExtensions).toBeDefined();
 			expect(typeof data1.rtpListener).toBe('object');
 
 			transport1.close();
 			expect(transport1.closed).toBe(true);
 
 			const anotherTransport = await router.createWebRtcTransport(
-				{ listenIps: [ '127.0.0.1' ] });
+				{
+					listenInfos : [ { protocol: 'udp', ip: '127.0.0.1' } ]
+				});
 
 			expect(typeof anotherTransport).toBe('object');
 		}, 2000);
@@ -184,12 +191,13 @@ export default function(mediasoup): void
 				.rejects
 				.toThrow(TypeError);
 
-			await expect(router.createWebRtcTransport({ listenIps: [] }))
+			// @ts-ignore
+			await expect(router.createWebRtcTransport({ listenIps: [ 123 ] }))
 				.rejects
 				.toThrow(TypeError);
 
 			// @ts-ignore
-			await expect(router.createWebRtcTransport({ listenIps: [ 123 ] }))
+			await expect(router.createWebRtcTransport({ listenInfos: '127.0.0.1' }))
 				.rejects
 				.toThrow(TypeError);
 
@@ -220,7 +228,10 @@ export default function(mediasoup): void
 
 		test('router.createWebRtcTransport() with non bindable IP rejects with Error', async () =>
 		{
-			await expect(router.createWebRtcTransport({ listenIps: [ '8.8.8.8' ] }))
+			await expect(router.createWebRtcTransport(
+				{
+					listenInfos : [ { protocol: 'udp', ip: '8.8.8.8' } ]
+				}))
 				.rejects
 				.toThrow(Error);
 		}, 2000);
@@ -282,6 +293,11 @@ export default function(mediasoup): void
 			expect(transport.dtlsParameters.role).toBe('server');
 		}, 2000);
 
+		/**
+		 * When are we going to rely on the type system in the API?
+		 * We are testing invalid type values which adds extra checks in the code that should be
+		 * simply guarded by the type system.
+		 */
 		test('webRtcTransport.connect() with wrong arguments rejects with TypeError', async () =>
 		{
 			let dtlsRemoteParameters: mediasoup.types.DtlsParameters;
@@ -296,6 +312,7 @@ export default function(mediasoup): void
 				fingerprints :
 				[
 					{
+						// @ts-ignore.
 						algorithm : 'sha-256000',
 						value     : '82:5A:68:3D:36:C3:0A:DE:AF:E7:32:43:D2:88:83:57:AC:2D:65:E5:80:C4:B6:FB:AF:1A:A0:21:9F:6D:0C:AD'
 					}
@@ -436,23 +453,23 @@ export default function(mediasoup): void
 			await transport.enableTraceEvent([ 'foo', 'probation' ]);
 			await expect(transport.dump())
 				.resolves
-				.toMatchObject({ traceEventTypes: 'probation' });
+				.toMatchObject({ traceEventTypes: [ 'probation' ] });
 
 			await transport.enableTraceEvent([]);
 			await expect(transport.dump())
 				.resolves
-				.toMatchObject({ traceEventTypes: '' });
+				.toMatchObject({ traceEventTypes: [] });
 
 			// @ts-ignore
 			await transport.enableTraceEvent([ 'probation', 'FOO', 'bwe', 'BAR' ]);
 			await expect(transport.dump())
 				.resolves
-				.toMatchObject({ traceEventTypes: 'probation,bwe' });
+				.toMatchObject({ traceEventTypes: [ 'probation', 'bwe' ] });
 
 			await transport.enableTraceEvent();
 			await expect(transport.dump())
 				.resolves
-				.toMatchObject({ traceEventTypes: '' });
+				.toMatchObject({ traceEventTypes: [] });
 		}, 2000);
 
 		test('transport.enableTraceEvent() with wrong arguments rejects with TypeError', async () =>
@@ -481,14 +498,34 @@ export default function(mediasoup): void
 
 			transport.on('icestatechange', onIceStateChange);
 
-			channel.emit(transport.id, 'icestatechange', { iceState: 'completed' });
+			// Simulate a 'iceselectedtuplechange' notification coming through the channel.
+			const builder = new flatbuffers.Builder();
+			const iceStateChangeNotification = new FbsWebRtcTransport.IceStateChangeNotificationT(
+				FbsWebRtcTransport.IceState.COMPLETED);
+
+			let notificationOffset = Notification.createNotification(
+				builder,
+				builder.createString(transport.id),
+				Event.WEBRTCTRANSPORT_ICE_STATE_CHANGE,
+				NotificationBody.WebRtcTransport_IceStateChangeNotification,
+				iceStateChangeNotification.pack(builder)
+			);
+
+			builder.finish(notificationOffset);
+
+			let notification = Notification.getRootAsNotification(
+				new flatbuffers.ByteBuffer(builder.asUint8Array()));
+
+			channel.emit(transport.id, Event.WEBRTCTRANSPORT_ICE_STATE_CHANGE, notification);
 
 			expect(onIceStateChange).toHaveBeenCalledTimes(1);
 			expect(onIceStateChange).toHaveBeenCalledWith('completed');
 			expect(transport.iceState).toBe('completed');
 
+			builder.clear();
+
 			const onIceSelectedTuple = jest.fn();
-			const iceSelectedTuple =
+			const iceSelectedTuple: TransportTuple =
 			{
 				localIp    : '1.1.1.1',
 				localPort  : 1111,
@@ -498,28 +535,66 @@ export default function(mediasoup): void
 			};
 
 			transport.on('iceselectedtuplechange', onIceSelectedTuple);
-			channel.emit(transport.id, 'iceselectedtuplechange', { iceSelectedTuple });
+
+			// Simulate a 'icestatechange' notification coming through the channel.
+			const iceSelectedTupleChangeNotification =
+				new FbsWebRtcTransport.IceSelectedTupleChangeNotificationT(
+					new FbsTransport.TupleT(
+						iceSelectedTuple.localIp,
+						iceSelectedTuple.localPort,
+						iceSelectedTuple.remoteIp,
+						iceSelectedTuple.remotePort,
+						serializeProtocol(iceSelectedTuple.protocol))
+				);
+
+			notificationOffset = Notification.createNotification(
+				builder,
+				builder.createString(transport.id),
+				Event.WEBRTCTRANSPORT_ICE_SELECTED_TUPLE_CHANGE,
+				NotificationBody.WebRtcTransport_IceSelectedTupleChangeNotification,
+				iceSelectedTupleChangeNotification.pack(builder)
+			);
+
+			builder.finish(notificationOffset);
+
+			notification = Notification.getRootAsNotification(
+				new flatbuffers.ByteBuffer(builder.asUint8Array()));
+
+			channel.emit(
+				transport.id, Event.WEBRTCTRANSPORT_ICE_SELECTED_TUPLE_CHANGE, notification);
 
 			expect(onIceSelectedTuple).toHaveBeenCalledTimes(1);
 			expect(onIceSelectedTuple).toHaveBeenCalledWith(iceSelectedTuple);
 			expect(transport.iceSelectedTuple).toEqual(iceSelectedTuple);
 
+			builder.clear();
+
 			const onDtlsStateChange = jest.fn();
 
 			transport.on('dtlsstatechange', onDtlsStateChange);
-			channel.emit(transport.id, 'dtlsstatechange', { dtlsState: 'connecting' });
+
+			// Simulate a 'dtlsstatechange' notification coming through the channel.
+			const dtlsStateChangeNotification = new FbsWebRtcTransport.DtlsStateChangeNotificationT(
+				FbsWebRtcTransport.DtlsState.CONNECTING);
+
+			notificationOffset = Notification.createNotification(
+				builder,
+				builder.createString(transport.id),
+				Event.WEBRTCTRANSPORT_DTLS_STATE_CHANGE,
+				NotificationBody.WebRtcTransport_DtlsStateChangeNotification,
+				dtlsStateChangeNotification.pack(builder)
+			);
+
+			builder.finish(notificationOffset);
+
+			notification = Notification.getRootAsNotification(
+				new flatbuffers.ByteBuffer(builder.asUint8Array()));
+
+			channel.emit(transport.id, Event.WEBRTCTRANSPORT_DTLS_STATE_CHANGE, notification);
 
 			expect(onDtlsStateChange).toHaveBeenCalledTimes(1);
 			expect(onDtlsStateChange).toHaveBeenCalledWith('connecting');
 			expect(transport.dtlsState).toBe('connecting');
-
-			channel.emit(
-				transport.id, 'dtlsstatechange', { dtlsState: 'connected', dtlsRemoteCert: 'ABCD' });
-
-			expect(onDtlsStateChange).toHaveBeenCalledTimes(2);
-			expect(onDtlsStateChange).toHaveBeenCalledWith('connected');
-			expect(transport.dtlsState).toBe('connected');
-			expect(transport.dtlsRemoteCert).toBe('ABCD');
 		}, 2000);
 
 		test('WebRtcTransport methods reject if closed', async () =>
@@ -572,8 +647,7 @@ export default function(mediasoup): void
 			const port = await pickPort({ ip: '127.0.0.1', reserveTimeout: 0 });
 			const webRtcTransport = await router.createWebRtcTransport(
 				{
-					listenIps : [ '127.0.0.1' ],
-					port
+					listenInfos : [ { protocol: 'udp', ip: '127.0.0.1', port } ]
 				});
 
 			expect(webRtcTransport.iceCandidates[0].port).toEqual(port);

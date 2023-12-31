@@ -2,8 +2,6 @@ export default function(mediasoup): void
 {
 	describe('ActiveSpeakerObserver', () =>
 	{
-		const { createWorker } = mediasoup;
-
 		let worker: mediasoup.types.Worker;
 		let router: mediasoup.types.Router;
 		let activeSpeakerObserver: mediasoup.types.ActiveSpeakerObserver;
@@ -25,7 +23,7 @@ export default function(mediasoup): void
 
 		beforeAll(async () =>
 		{
-			worker = await createWorker();
+			worker = await mediasoup.createWorker();
 			router = await worker.createRouter({ mediaCodecs });
 		});
 

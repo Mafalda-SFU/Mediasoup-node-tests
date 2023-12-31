@@ -1,11 +1,26 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+
+import {sync} from 'pkg-dir'
+
 export default function(mediasoup): void
 {
 	describe('mediasoup', () =>
 	{
+		const PKG = JSON.parse(fs.readFileSync(
+			path.join(sync(__dirname), 'package.json'), { encoding: 'utf-8' })
+		);
+
 		const {
+			version,
 			getSupportedRtpCapabilities,
 			parseScalabilityMode
 		} = mediasoup;
+
+		test('mediasoup.version matches version field in package.json', () =>
+		{
+			expect(version).toBe(PKG.version);
+		});
 
 		test('mediasoup.getSupportedRtpCapabilities() returns the mediasoup RTP capabilities', () =>
 		{

@@ -2,8 +2,6 @@ export default function(mediasoup): void
 {
 	describe('AudioLevelObserver', () =>
 	{
-		const { createWorker } = mediasoup;
-
 		let worker: mediasoup.types.Worker;
 		let router: mediasoup.types.Router;
 		let audioLevelObserver: mediasoup.types.AudioLevelObserver;
@@ -25,7 +23,7 @@ export default function(mediasoup): void
 
 		beforeAll(async () =>
 		{
-			worker = await createWorker();
+			worker = await mediasoup.createWorker();
 			router = await worker.createRouter({ mediaCodecs });
 		});
 

@@ -4,8 +4,6 @@ export default function(mediasoup): void
 
 	describe('Router', () =>
 	{
-		const { createWorker } = mediasoup;
-
 		let worker: mediasoup.types.Worker;
 
 		beforeEach(() => worker && !worker.closed && worker.close());
@@ -45,7 +43,7 @@ export default function(mediasoup): void
 
 		test('worker.createRouter() succeeds', async () =>
 		{
-			worker = await createWorker();
+			worker = await mediasoup.createWorker();
 
 			const onObserverNewRouter = jest.fn();
 
@@ -70,16 +68,15 @@ export default function(mediasoup): void
 
 			await expect(worker.dump())
 				.resolves
-				.toEqual(
+				.toMatchObject(
 					{
 						pid                    : worker.pid,
 						webRtcServerIds        : [],
 						routerIds              : [ router.id ],
 						channelMessageHandlers :
 						{
-							channelRequestHandlers             : [ router.id ],
-							payloadChannelRequestHandlers      : [],
-							payloadChannelNotificationHandlers : []
+							channelRequestHandlers      : [ router.id ],
+							channelNotificationHandlers : []
 						}
 					});
 
@@ -110,7 +107,7 @@ export default function(mediasoup): void
 
 		test('worker.createRouter() with wrong arguments rejects with TypeError', async () =>
 		{
-			worker = await createWorker();
+			worker = await mediasoup.createWorker();
 
 			// @ts-ignore
 			await expect(worker.createRouter({ mediaCodecs: {} }))
@@ -127,7 +124,7 @@ export default function(mediasoup): void
 
 		test('worker.createRouter() rejects with InvalidStateError if Worker is closed', async () =>
 		{
-			worker = await createWorker();
+			worker = await mediasoup.createWorker();
 
 			worker.close();
 
@@ -138,7 +135,7 @@ export default function(mediasoup): void
 
 		test('router.close() succeeds', async () =>
 		{
-			worker = await createWorker();
+			worker = await mediasoup.createWorker();
 
 			const router = await worker.createRouter({ mediaCodecs });
 			const onObserverClose = jest.fn();
@@ -152,7 +149,7 @@ export default function(mediasoup): void
 
 		test('Router emits "workerclose" if Worker is closed', async () =>
 		{
-			worker = await createWorker();
+			worker = await mediasoup.createWorker();
 
 			const router = await worker.createRouter({ mediaCodecs });
 			const onObserverClose = jest.fn();

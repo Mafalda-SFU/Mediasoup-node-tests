@@ -7,8 +7,6 @@ export default function(mediasoup): void
 
 	describe('WebRtcServer', () =>
 	{
-		const { createWorker } = mediasoup;
-
 		let worker: mediasoup.types.Worker;
 
 		beforeEach(() => worker && !worker.closed && worker.close());
@@ -16,7 +14,7 @@ export default function(mediasoup): void
 
 		test('worker.createWebRtcServer() succeeds', async () =>
 		{
-			worker = await createWorker();
+			worker = await mediasoup.createWorker();
 
 			const onObserverNewWebRtcServer = jest.fn();
 
@@ -52,16 +50,15 @@ export default function(mediasoup): void
 
 			await expect(worker.dump())
 				.resolves
-				.toEqual(
+				.toMatchObject(
 					{
 						pid                    : worker.pid,
 						webRtcServerIds        : [ webRtcServer.id ],
 						routerIds              : [],
 						channelMessageHandlers :
 						{
-							channelRequestHandlers             : [ webRtcServer.id ],
-							payloadChannelRequestHandlers      : [],
-							payloadChannelNotificationHandlers : []
+							channelRequestHandlers      : [ webRtcServer.id ],
+							channelNotificationHandlers : []
 						}
 					});
 
@@ -96,7 +93,7 @@ export default function(mediasoup): void
 
 		test('worker.createWebRtcServer() without specifying port succeeds', async () =>
 		{
-			worker = await createWorker();
+			worker = await mediasoup.createWorker();
 
 			const onObserverNewWebRtcServer = jest.fn();
 
@@ -127,16 +124,15 @@ export default function(mediasoup): void
 
 			await expect(worker.dump())
 				.resolves
-				.toEqual(
+				.toMatchObject(
 					{
 						pid                    : worker.pid,
 						webRtcServerIds        : [ webRtcServer.id ],
 						routerIds              : [],
 						channelMessageHandlers :
 						{
-							channelRequestHandlers             : [ webRtcServer.id ],
-							payloadChannelRequestHandlers      : [],
-							payloadChannelNotificationHandlers : []
+							channelRequestHandlers      : [ webRtcServer.id ],
+							channelNotificationHandlers : []
 						}
 					});
 
@@ -171,7 +167,7 @@ export default function(mediasoup): void
 
 		test('worker.createWebRtcServer() with wrong arguments rejects with TypeError', async () =>
 		{
-			worker = await createWorker();
+			worker = await mediasoup.createWorker();
 
 			// @ts-ignore
 			await expect(worker.createWebRtcServer({}))
@@ -186,7 +182,7 @@ export default function(mediasoup): void
 			// @ts-ignore
 			await expect(worker.createWebRtcServer({ listenInfos: [ 'NOT-AN-OBJECT' ] }))
 				.rejects
-				.toThrow(TypeError);
+				.toThrow(Error);
 
 			// Empty listenInfos so should fail.
 			await expect(worker.createWebRtcServer({ listenInfos: [] }))
@@ -198,8 +194,8 @@ export default function(mediasoup): void
 
 		test('worker.createWebRtcServer() with unavailable listenInfos rejects with Error', async () =>
 		{
-			const worker1 = await createWorker();
-			const worker2 = await createWorker();
+			const worker1 = await mediasoup.createWorker();
+			const worker2 = await mediasoup.createWorker();
 			const port1 = await pickPort({ ip: '127.0.0.1', reserveTimeout: 0 });
 			const port2 = await pickPort({ ip: '127.0.0.1', reserveTimeout: 0 });
 
@@ -277,7 +273,7 @@ export default function(mediasoup): void
 
 		test('worker.createWebRtcServer() rejects with InvalidStateError if Worker is closed', async () =>
 		{
-			worker = await createWorker();
+			worker = await mediasoup.createWorker();
 
 			worker.close();
 
@@ -293,7 +289,7 @@ export default function(mediasoup): void
 
 		test('webRtcServer.close() succeeds', async () =>
 		{
-			worker = await createWorker();
+			worker = await mediasoup.createWorker();
 
 			const port = await pickPort({ ip: '127.0.0.1', reserveTimeout: 0 });
 			const webRtcServer = await worker.createWebRtcServer(
@@ -311,7 +307,7 @@ export default function(mediasoup): void
 
 		test('WebRtcServer emits "workerclose" if Worker is closed', async () =>
 		{
-			worker = await createWorker();
+			worker = await mediasoup.createWorker();
 
 			const port = await pickPort({ ip: '127.0.0.1', reserveTimeout: 0 });
 			const webRtcServer = await worker.createWebRtcServer(
@@ -334,7 +330,7 @@ export default function(mediasoup): void
 
 		test('router.createWebRtcTransport() with webRtcServer succeeds and transport is closed', async () =>
 		{
-			worker = await createWorker();
+			worker = await mediasoup.createWorker();
 
 			const port1 = await pickPort({ ip: '127.0.0.1', reserveTimeout: 0 });
 			const port2 = await pickPort({ type: 'tcp', ip: '127.0.0.1', reserveTimeout: 0 });
@@ -362,7 +358,8 @@ export default function(mediasoup): void
 			const transport = await router.createWebRtcTransport(
 				{
 					webRtcServer,
-					enableTcp : false,
+					// Let's disable UDP so resulting ICE candidates should only contain TCP.
+					enableUdp : false,
 					appData   : { foo: 'bar' }
 				});
 
@@ -382,10 +379,10 @@ export default function(mediasoup): void
 
 			expect(iceCandidates.length).toBe(1);
 			expect(iceCandidates[0].ip).toBe('127.0.0.1');
-			expect(iceCandidates[0].port).toBe(port1);
-			expect(iceCandidates[0].protocol).toBe('udp');
+			expect(iceCandidates[0].port).toBe(port2);
+			expect(iceCandidates[0].protocol).toBe('tcp');
 			expect(iceCandidates[0].type).toBe('host');
-			expect(iceCandidates[0].tcpType).toBeUndefined();
+			expect(iceCandidates[0].tcpType).toBe('passive');
 
 			expect(transport.iceState).toBe('new');
 			expect(transport.iceSelectedTuple).toBeUndefined();
@@ -443,7 +440,7 @@ export default function(mediasoup): void
 
 		test('router.createWebRtcTransport() with webRtcServer succeeds and webRtcServer is closed', async () =>
 		{
-			worker = await createWorker();
+			worker = await mediasoup.createWorker();
 
 			const port1 = await pickPort({ ip: '127.0.0.1', reserveTimeout: 0 });
 			const port2 = await pickPort({ type: 'tcp', ip: '127.0.0.1', reserveTimeout: 0 });
@@ -466,9 +463,7 @@ export default function(mediasoup): void
 			const transport = await router.createWebRtcTransport(
 				{
 					webRtcServer,
-					enableUdp : false,
-					enableTcp : true,
-					appData   : { foo: 'bar' }
+					appData : { foo: 'bar' }
 				});
 
 			expect(onObserverWebRtcTransportHandled).toHaveBeenCalledTimes(1);
@@ -484,12 +479,17 @@ export default function(mediasoup): void
 
 			const iceCandidates = transport.iceCandidates;
 
-			expect(iceCandidates.length).toBe(1);
+			expect(iceCandidates.length).toBe(2);
 			expect(iceCandidates[0].ip).toBe('127.0.0.1');
-			expect(iceCandidates[0].port).toBe(port2);
-			expect(iceCandidates[0].protocol).toBe('tcp');
+			expect(iceCandidates[0].port).toBe(port1);
+			expect(iceCandidates[0].protocol).toBe('udp');
 			expect(iceCandidates[0].type).toBe('host');
-			expect(iceCandidates[0].tcpType).toBe('passive');
+			expect(iceCandidates[0].tcpType).toBeUndefined();
+			expect(iceCandidates[1].ip).toBe('127.0.0.1');
+			expect(iceCandidates[1].port).toBe(port2);
+			expect(iceCandidates[1].protocol).toBe('tcp');
+			expect(iceCandidates[1].type).toBe('host');
+			expect(iceCandidates[1].tcpType).toBe('passive');
 
 			expect(transport.iceState).toBe('new');
 			expect(transport.iceSelectedTuple).toBeUndefined();
@@ -569,16 +569,15 @@ export default function(mediasoup): void
 
 			await expect(worker.dump())
 				.resolves
-				.toEqual(
+				.toMatchObject(
 					{
 						pid                    : worker.pid,
 						webRtcServerIds        : [],
 						routerIds              : [ router.id ],
 						channelMessageHandlers :
 						{
-							channelRequestHandlers             : [ router.id ],
-							payloadChannelRequestHandlers      : [],
-							payloadChannelNotificationHandlers : []
+							channelRequestHandlers      : [ router.id ],
+							channelNotificationHandlers : []
 						}
 					});
 

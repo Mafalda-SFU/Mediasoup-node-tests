@@ -5,8 +5,6 @@ export default function(mediasoup): void
 {
 	describe('PlainTransport', () =>
 	{
-		const { createWorker } = mediasoup;
-
 		let worker: mediasoup.types.Worker;
 		let router: mediasoup.types.Router;
 		let transport: mediasoup.types.PlainTransport;
@@ -46,7 +44,7 @@ export default function(mediasoup): void
 
 		beforeAll(async () =>
 		{
-			worker = await createWorker();
+			worker = await mediasoup.createWorker();
 			router = await worker.createRouter({ mediaCodecs });
 		});
 
@@ -56,8 +54,8 @@ export default function(mediasoup): void
 		{
 			transport = await router.createPlainTransport(
 				{
-					listenIp : { ip: '127.0.0.1', announcedIp: '4.4.4.4' },
-					rtcpMux  : false
+					listenInfo : { protocol: 'udp', ip: '127.0.0.1', announcedIp: '4.4.4.4' },
+					rtcpMux    : false
 				});
 		});
 
@@ -76,7 +74,7 @@ export default function(mediasoup): void
 			// Create a separate transport here.
 			const transport1 = await router.createPlainTransport(
 				{
-					listenIp   : { ip: '127.0.0.1', announcedIp: '9.9.9.1' },
+					listenInfo : { protocol: 'udp', ip: '127.0.0.1', announcedIp: '9.9.9.1' },
 					rtcpMux    : true,
 					enableSctp : true,
 					appData    : { foo: 'bar' }
@@ -112,7 +110,7 @@ export default function(mediasoup): void
 			expect(data1.rtcpTuple).toEqual(transport1.rtcpTuple);
 			expect(data1.sctpParameters).toEqual(transport1.sctpParameters);
 			expect(data1.sctpState).toBe('new');
-			expect(typeof data1.recvRtpHeaderExtensions).toBe('object');
+			expect(data1.recvRtpHeaderExtensions).toBeDefined();
 			expect(typeof data1.rtpListener).toBe('object');
 
 			transport1.close();
@@ -122,10 +120,13 @@ export default function(mediasoup): void
 
 			expect(typeof anotherTransport).toBe('object');
 
+			const rtpPort = await pickPort({ ip: '127.0.0.1', reserveTimeout: 0 });
+			const rtcpPort = await pickPort({ ip: '127.0.0.1', reserveTimeout: 0 });
 			const transport2 = await router.createPlainTransport(
 				{
-					listenIp : '127.0.0.1',
-					rtcpMux  : false
+					listenInfo     : { protocol: 'udp', ip: '127.0.0.1', port: rtpPort },
+					rtcpListenInfo : { protocol: 'udp', ip: '127.0.0.1', port: rtcpPort },
+					rtcpMux        : false
 				});
 
 			expect(typeof transport2.id).toBe('string');
@@ -133,11 +134,11 @@ export default function(mediasoup): void
 			expect(transport2.appData).toEqual({});
 			expect(typeof transport2.tuple).toBe('object');
 			expect(transport2.tuple.localIp).toBe('127.0.0.1');
-			expect(typeof transport2.tuple.localPort).toBe('number');
+			expect(transport2.tuple.localPort).toBe(rtpPort);
 			expect(transport2.tuple.protocol).toBe('udp');
 			expect(typeof transport2.rtcpTuple).toBe('object');
 			expect(transport2.rtcpTuple?.localIp).toBe('127.0.0.1');
-			expect(typeof transport2.rtcpTuple?.localPort).toBe('number');
+			expect(transport2.rtcpTuple?.localPort).toBe(rtcpPort);
 			expect(transport2.rtcpTuple?.protocol).toBe('udp');
 			expect(transport2.sctpParameters).toBeUndefined();
 			expect(transport2.sctpState).toBeUndefined();
@@ -167,11 +168,18 @@ export default function(mediasoup): void
 				.rejects
 				.toThrow(TypeError);
 
+			await expect(router.createPipeTransport(
+				{
+					listenInfo : { protocol: 'tcp', ip: '127.0.0.1' }
+				}))
+				.rejects
+				.toThrow(TypeError);
+
 			await expect(router.createPlainTransport(
 				{
-					listenIp : '127.0.0.1',
+					listenInfo : { protocol: 'udp', ip: '127.0.0.1' },
 					// @ts-ignore
-					appData  : 'NOT-AN-OBJECT'
+					appData    : 'NOT-AN-OBJECT'
 				}))
 				.rejects
 				.toThrow(TypeError);
@@ -424,8 +432,7 @@ export default function(mediasoup): void
 			const port = await pickPort({ ip: '127.0.0.1', reserveTimeout: 0 });
 			const plainTransport = await router.createPlainTransport(
 				{
-					listenIp : '127.0.0.1',
-					port
+					listenInfo : { protocol: 'udp', ip: '127.0.0.1', port }
 				});
 
 			expect(plainTransport.tuple.localPort).toEqual(port);

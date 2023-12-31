@@ -1,4 +1,4 @@
-import * as ortc from 'mediasoup/node/lib/ortc';
+import * as ortc from '@mafalda-sfu/mediasoup-ortc';
 
 export default function(mediasoup): void
 {
@@ -151,7 +151,7 @@ export default function(mediasoup): void
 			];
 
 			expect(() => ortc.generateRouterRtpCapabilities(mediaCodecs))
-				.toThrow();
+				.toThrow(Error);
 
 			mediaCodecs =
 			[
@@ -164,7 +164,7 @@ export default function(mediasoup): void
 			];
 
 			expect(() => ortc.generateRouterRtpCapabilities(mediaCodecs))
-				.toThrow();
+				.toThrow(Error);
 		});
 
 		test('generateRouterRtpCapabilities() with too many codecs throws', () =>
@@ -340,8 +340,7 @@ export default function(mediasoup): void
 			expect(consumableRtpParameters.rtcp).toEqual(
 				{
 					cname       : rtpParameters.rtcp?.cname,
-					reducedSize : true,
-					mux         : true
+					reducedSize : true
 				});
 
 			const remoteRtpCapabilities: mediasoup.types.RtpCapabilities =
@@ -506,8 +505,7 @@ export default function(mediasoup): void
 			expect(consumerRtpParameters.rtcp).toEqual(
 				{
 					cname       : rtpParameters.rtcp?.cname,
-					reducedSize : true,
-					mux         : true
+					reducedSize : true
 				});
 
 			const pipeConsumerRtpParameters = ortc.getPipeConsumerRtpParameters(
@@ -553,8 +551,7 @@ export default function(mediasoup): void
 			expect(pipeConsumerRtpParameters.rtcp).toEqual(
 				{
 					cname       : rtpParameters.rtcp?.cname,
-					reducedSize : true,
-					mux         : true
+					reducedSize : true
 				});
 		});
 
@@ -610,7 +607,7 @@ export default function(mediasoup): void
 
 			expect(
 				() => ortc.getProducerRtpParametersMapping(rtpParameters, routerRtpCapabilities))
-				.toThrow();
+				.toThrow(Error);
 		});
 	});
 }
