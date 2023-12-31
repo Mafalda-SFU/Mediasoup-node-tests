@@ -14,7 +14,38 @@ const tar = require('tar-stream');
 
 
 const options = {force: true, recursive: true}
-const repo = 'versatica/mediasoup';
+const repo = 'versatica/mediasoup'
+const TransportTs = `import * as FbsTransport from '../gen/fbs/transport';
+
+/**
+ * Transport protocol.
+ */
+export type TransportProtocol = 'udp' | 'tcp';
+
+export type TransportTuple =
+{
+  localIp: string;
+  localPort: number;
+  remoteIp?: string;
+  remotePort?: number;
+  protocol: TransportProtocol;
+};
+
+export function serializeProtocol(protocol: TransportProtocol): FbsTransport.Protocol
+{
+  switch (protocol)
+  {
+    case 'udp':
+    {
+      return FbsTransport.Protocol.UDP;
+    }
+
+    case 'tcp':
+    {
+      return FbsTransport.Protocol.TCP;
+    }
+  }
+}`
 
 
 function filterOrtcUnsuportedError(line)
@@ -54,6 +85,7 @@ function isNotRustRelease({tag_name})
     fetch(tarball_url),
     rm('src', options)
     .then(mkdir.bind(null, 'src', options))
+    .then(writeFile.bind(null, 'src/Transport.ts', TransportTs, 'utf8'))
   ])
 
   const extract = Readable.fromWeb(body).pipe(createGunzip()).pipe(tar.extract())
@@ -64,21 +96,55 @@ function isNotRustRelease({tag_name})
 
     let path = name.split(sep)
     path.shift()
-    path.shift()
     path = path.join(sep)
 
-    if(path === 'tsconfig.json')
+    if(path === 'node/tsconfig.json')
     {
+      path = path.split(sep)
+      path.shift()
+      path = path.join(sep)
+
       const content = await text(entry);
 
       await writeFile(path, content, 'utf8')
       continue
     }
 
-    if(path.startsWith('src/tests'))
+    if(path.startsWith('worker/fbs'))
     {
       let path2 = path.split(sep)
       path2.shift()
+      // Ensure path fragment is exactly `fbs/`, not something like `fbs...`
+      if(path2[0] === 'fbs') path2.unshift('src')
+      path2 = path2.join(sep)
+
+      switch(type)
+      {
+        case 'directory':
+          await mkdir(path2, options)
+          break
+
+        case 'file':
+          {
+            const content = await text(entry);
+
+            await writeFile(path2, content, 'utf8')
+          }
+          break
+
+        default:
+          throw new Error(`Unknown entry type: ${type}`)
+      }
+
+      continue
+    }
+
+    if(path.startsWith('node/src/tests'))
+    {
+      let path2 = path.split(sep)
+      path2.shift()
+      path2.shift()
+      // Ensure path fragment is exactly `tests/`, not something like `tests...`
       if(path2[0] === 'tests') path2[0] = 'src'
       path2 = path2.join(sep)
 
@@ -113,6 +179,8 @@ function isNotRustRelease({tag_name})
                 {
                   // Ignore imports of mediasoup, since we are going to do
                   // dependency injection.
+                  // TODO: generate type for `mediasoup`, or use
+                  //       `typeof mediasoup`. It's only needed for Typescript
                   if(line.includes('mediasoup')) continue
 
                   // Replace imports of mediasoup types.
@@ -126,10 +194,16 @@ function isNotRustRelease({tag_name})
                     continue
                   }
 
-                  if(line.includes('../ortc'))
+                  if(line.includes('../fbs'))
+                    line = line.replace('../fbs', '../gen/fbs')
+
+                  else if(line.includes('../ortc'))
                     line = line.replace(
                       '../ortc', '@mafalda-sfu/mediasoup-ortc'
                     )
+
+                  else if(line.includes('../Transport'))
+                    line = line.replace('../Transport', './Transport')
                 }
 
                 else if(!indent)
@@ -146,7 +220,14 @@ function isNotRustRelease({tag_name})
 
                   describeName = basename(path2, '.ts').slice(5)
 
-                  if(describeName === 'Worker')
+                  if(describeName === 'mediasoup')
+                  {
+                    content.push("import {sync} from 'pkg-dir'")
+
+                    content.push('')
+                  }
+
+                  else if(describeName === 'Worker')
                   {
                     content.push('const skipIfHasVirtualPids =')
                     content.push('  process.env.HAS_VIRTUAL_PIDS')
@@ -176,10 +257,18 @@ function isNotRustRelease({tag_name})
                   content.push('\t{')
                 }
 
+                else if(describeName === 'mediasoup')
+                {
+                  if(line.includes('__dirname'))
+                    line = line.replace(
+                      "__dirname, '..', '..', '..'", 'sync(__dirname)'
+                    )
+                }
+
                 else if(describeName === 'ortc')
                 {
                   if(line.includes('.toThrow(UnsupportedError)'))
-                    line = line.replace('UnsupportedError', '')
+                    line = line.replace('UnsupportedError', 'Error')
                 }
 
                 else if(describeName === 'Worker')
@@ -223,11 +312,11 @@ function isNotRustRelease({tag_name})
   } = pkgJson
 
   pkgJson.update({
-    dependencies: {
-      ...dependencies,
+    dependencies,
+    devDependencies: {
+      ...devDependencies,
       mediasoup: `^${version}`
     },
-    devDependencies,
     optionalDependencies,
     peerDependencies,
     version

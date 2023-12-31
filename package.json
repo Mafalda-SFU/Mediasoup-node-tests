@@ -7,7 +7,11 @@
     "./*": "./lib/test-*.js"
   },
   "scripts": {
-    "build": "tsc 1> /dev/null; cp --recursive src/data/ lib/",
+    "build": "npm run build:flatbuffers_gen && npm run build:typescript; npm run build:data",
+    "build:data": "cp --recursive src/data/ lib/",
+    "build:flatbuffers": "#flatc --ts --ts-no-import-ext --gen-object-api -o lib/ gen/fbs/*",
+    "build:flatbuffers_gen": "rm -rf gen/ && mkdir -p gen/ && cp -R node_modules/mediasoup/node/lib/fbs/ gen/",
+    "build:typescript": "tsc 1> /dev/null",
     "prepare": "npm run build",
     "release": "scripts/release.js",
     "test": "jest",
@@ -23,7 +27,9 @@
   "license": "ISC",
   "dependencies": {
     "@mafalda-sfu/mediasoup-ortc": "^3.12.16",
+    "flatbuffers": "^23.5.26",
     "pick-port": "^1.0.1",
+    "pkg-dir": "~5.0.0",
     "sctp": "^1.0.0",
     "semver": "^7.5.4"
   },
