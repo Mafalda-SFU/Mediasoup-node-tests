@@ -8,17 +8,21 @@ on:
   workflow_dispatch:
 
 jobs:
-  nightly:
+  # Check and update
+  check_and_update:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ssh-key: "${{secrets.COMMIT_KEY}}"
 
       # Setup Node.js
       - name: Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/-2
 
       # Install dependencies
       - run: npm ci --verbose
@@ -55,13 +59,73 @@ jobs:
         if : ${{ steps.update.outputs.new_version != '' }}
         run: npm run release
 
+  # Publish to registries and GitHub release
+  publish-gpr:
+    if : ${{ needs.check_and_update.outputs.new_version != '' }}
+    needs: check_and_update
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/-2
+          registry-url: https://npm.pkg.github.com/
+
+      # Publish
+      - run: npm ci --verbose
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+  publish-npm-registry:
+    if : ${{ needs.check_and_update.outputs.new_version != '' }}
+    needs: check_and_update
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/-2
+          registry-url: https://registry.npmjs.org/
+
+      # Publish
+      - run: npm ci --verbose
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.npm_token}}
+
+  upload-to-github-release:
+    if : ${{ needs.check_and_update.outputs.new_version != '' }}
+    needs: check_and_update
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/-2
+
+      # Create package
+      - run: npm ci --verbose
+      - run: npm pack
+
       # Create release
       - name: Create release
-        if : ${{ steps.update.outputs.new_version != '' }}
-        run: |
-          gh release create \
-            ${{ steps.update.outputs.new_version }} \
-            --generate-notes \
-            --verify-tag
-        env:
-          GH_TOKEN: ${{ github.token }}
+        uses: softprops/action-gh-release@v1
+        with:
+          files: '*.tgz'
+          generate_release_notes: true
+          # --verify-tag
