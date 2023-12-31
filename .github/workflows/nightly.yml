@@ -12,6 +12,9 @@ jobs:
   check_and_update:
     runs-on: ubuntu-latest
 
+    outputs:
+      new_version: ${{ steps.update.outputs.new_version }}
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -22,7 +25,7 @@ jobs:
       - name: Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: lts/-2
+          node-version: lts/-1
 
       # Install dependencies
       - run: npm ci --verbose
