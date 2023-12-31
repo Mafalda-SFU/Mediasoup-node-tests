@@ -42,7 +42,7 @@ jobs:
       - name: Update dependencies
         if : ${{ steps.update.outputs.new_version != '' }}
         run: |
-          npx npm-check-updates -u
+          npx npm-check-updates --target semver --upgrade
           npm install --verbose
 
       # Ensure extracted tests are working
