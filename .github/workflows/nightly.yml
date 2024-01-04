@@ -134,4 +134,5 @@ jobs:
         with:
           files: '*.tgz'
           generate_release_notes: true
+          tag_name: ${{ needs.check_and_update.outputs.new_version }}
           # --verify-tag
