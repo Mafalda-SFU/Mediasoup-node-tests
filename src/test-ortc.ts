@@ -606,8 +606,9 @@ export default function(mediasoup): void
 			};
 
 			expect(
-				() => ortc.getProducerRtpParametersMapping(rtpParameters, routerRtpCapabilities))
-				.toThrow(Error);
+				() => ortc.getProducerRtpParametersMapping(
+					rtpParameters, routerRtpCapabilities
+				)).toThrow(Error);
 		});
 	});
 }
