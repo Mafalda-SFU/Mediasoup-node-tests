@@ -1,6 +1,6 @@
 # Mediasoup-node-tests
 
-[![hourly](https://github.com/Mafalda-SFU/Mediasoup-node-tests/actions/workflows/hourly.yml/badge.svg)](https://github.com/Mafalda-SFU/Mediasoup-node-tests/actions/workflows/hourly.yml)
+[![main](https://github.com/Mafalda-SFU/Mediasoup-node-tests/actions/workflows/main.yml/badge.svg)](https://github.com/Mafalda-SFU/Mediasoup-node-tests/actions/workflows/main.yml)
 [![npm](https://img.shields.io/npm/v/@mafalda-sfu/mediasoup-node-tests.svg)](https://www.npmjs.com/package/@mafalda-sfu/mediasoup-node-tests)
 
 Node.js tests extracted from [Mediasoup](https://mediasoup.org/)
