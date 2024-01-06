@@ -56,7 +56,8 @@ const satisfies = require('semver/functions/satisfies')
 const {version} = require('./package.json')
 
 
-const range = `^${version}`
+const [major, minor] = version.split('.')
+const range = `^${major}.${minor}`
 
 
 module.exports = function(mediasoup)
