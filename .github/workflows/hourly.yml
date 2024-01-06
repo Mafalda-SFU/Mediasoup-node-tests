@@ -1,8 +1,8 @@
-name: nightly
+name: hourly
 
 on:
   schedule:
-  - cron: "0 0 * * *"
+  - cron: "0 * * * *"
   # Manual dispatch, only for testing purposes. See
   # https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow
   workflow_dispatch:
