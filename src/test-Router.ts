@@ -1,58 +1,73 @@
+import * as utils from './utils';
+
 export default function(mediasoup): void
 {
 	const { InvalidStateError } = mediasoup.types;
 
 	describe('Router', () =>
 	{
-		let worker: mediasoup.types.Worker;
+		type TestContext =
+		{
+			mediaCodecs: mediasoup.types.RtpCodecCapability[];
+			worker?: mediasoup.types.Worker;
+		};
 
-		beforeEach(() => worker && !worker.closed && worker.close());
-		afterEach(() => worker && !worker.closed && worker.close());
+		const ctx: TestContext =
+		{
+			mediaCodecs : utils.deepFreeze(
+				[
+					{
+						kind       : 'audio',
+						mimeType   : 'audio/opus',
+						clockRate  : 48000,
+						channels   : 2,
+						parameters :
+						{
+							useinbandfec : 1,
+							foo          : 'bar'
+						}
+					},
+					{
+						kind      : 'video',
+						mimeType  : 'video/VP8',
+						clockRate : 90000
+					},
+					{
+						kind       : 'video',
+						mimeType   : 'video/H264',
+						clockRate  : 90000,
+						parameters :
+						{
+							'level-asymmetry-allowed' : 1,
+							'packetization-mode'      : 1,
+							'profile-level-id'        : '4d0032'
+						},
+						rtcpFeedback : [] // Will be ignored.
+					}
+				]
+			)
+		};
 
-		const mediaCodecs: mediasoup.types.RtpCodecCapability[] =
-		[
-			{
-				kind       : 'audio',
-				mimeType   : 'audio/opus',
-				clockRate  : 48000,
-				channels   : 2,
-				parameters :
-				{
-					useinbandfec : 1,
-					foo          : 'bar'
-				}
-			},
-			{
-				kind      : 'video',
-				mimeType  : 'video/VP8',
-				clockRate : 90000
-			},
-			{
-				kind       : 'video',
-				mimeType   : 'video/H264',
-				clockRate  : 90000,
-				parameters :
-				{
-					'level-asymmetry-allowed' : 1,
-					'packetization-mode'      : 1,
-					'profile-level-id'        : '4d0032'
-				},
-				rtcpFeedback : [] // Will be ignored.
-			}
-		];
+		beforeEach(async () =>
+		{
+			ctx.worker = await mediasoup.createWorker();
+		});
+
+		afterEach(() =>
+		{
+			ctx.worker?.close();
+		});
 
 		test('worker.createRouter() succeeds', async () =>
 		{
-			worker = await mediasoup.createWorker();
-
 			const onObserverNewRouter = jest.fn();
 
-			worker.observer.once('newrouter', onObserverNewRouter);
+			ctx.worker!.observer.once('newrouter', onObserverNewRouter);
 
-			const router = await worker.createRouter<{ foo: number; bar?: string }>(
+			const router = await ctx.worker!.createRouter<{ foo: number; bar?: string }>(
 				{
-					mediaCodecs,
-					appData : { foo: 123 }
+					mediaCodecs : ctx.mediaCodecs,
+					appData     : { foo: 123 }
 				});
 
 			expect(onObserverNewRouter).toHaveBeenCalledTimes(1);
@@ -66,11 +81,11 @@ export default function(mediasoup): void
 
 			expect(() => (router.appData = { foo: 222, bar: 'BBB' })).not.toThrow();
 
-			await expect(worker.dump())
+			await expect(ctx.worker!.dump())
 				.resolves
 				.toMatchObject(
 					{
-						pid                    : worker.pid,
+						pid                    : ctx.worker!.pid,
 						webRtcServerIds        : [],
 						routerIds              : [ router.id ],
 						channelMessageHandlers :
@@ -95,49 +110,41 @@ export default function(mediasoup): void
 					});
 
 			// Private API.
-			expect(worker.routersForTesting.size).toBe(1);
+			expect(ctx.worker!.routersForTesting.size).toBe(1);
 
-			worker.close();
+			ctx.worker!.close();
 
 			expect(router.closed).toBe(true);
 
 			// Private API.
-			expect(worker.routersForTesting.size).toBe(0);
+			expect(ctx.worker!.routersForTesting.size).toBe(0);
 		}, 2000);
 
 		test('worker.createRouter() with wrong arguments rejects with TypeError', async () =>
 		{
-			worker = await mediasoup.createWorker();
-
 			// @ts-ignore
-			await expect(worker.createRouter({ mediaCodecs: {} }))
+			await expect(ctx.worker!.createRouter({ mediaCodecs: {} }))
 				.rejects
 				.toThrow(TypeError);
 
 			// @ts-ignore
-			await expect(worker.createRouter({ appData: 'NOT-AN-OBJECT' }))
+			await expect(ctx.worker!.createRouter({ appData: 'NOT-AN-OBJECT' }))
 				.rejects
 				.toThrow(TypeError);
-
-			worker.close();
 		}, 2000);
 
 		test('worker.createRouter() rejects with InvalidStateError if Worker is closed', async () =>
 		{
-			worker = await mediasoup.createWorker();
+			ctx.worker!.close();
 
-			worker.close();
-
-			await expect(worker.createRouter({ mediaCodecs }))
+			await expect(ctx.worker!.createRouter({ mediaCodecs: ctx.mediaCodecs }))
 				.rejects
 				.toThrow(InvalidStateError);
 		}, 2000);
 
 		test('router.close() succeeds', async () =>
 		{
-			worker = await mediasoup.createWorker();
-
-			const router = await worker.createRouter({ mediaCodecs });
+			const router = await ctx.worker!.createRouter({ mediaCodecs: ctx.mediaCodecs });
 			const onObserverClose = jest.fn();
 
 			router.observer.once('close', onObserverClose);
@@ -149,9 +156,7 @@ export default function(mediasoup): void
 
 		test('Router emits "workerclose" if Worker is closed', async () =>
 		{
-			worker = await mediasoup.createWorker();
-
-			const router = await worker.createRouter({ mediaCodecs });
+			const router = await ctx.worker!.createRouter({ mediaCodecs: ctx.mediaCodecs });
 			const onObserverClose = jest.fn();
 
 			router.observer.once('close', onObserverClose);
@@ -159,7 +164,7 @@ export default function(mediasoup): void
 			await new Promise<void>((resolve) =>
 			{
 				router.on('workerclose', resolve);
-				worker.close();
+				ctx.worker!.close();
 			});
 
 			expect(onObserverClose).toHaveBeenCalledTimes(1);

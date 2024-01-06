@@ -2,28 +2,33 @@ import * as dgram from 'node:dgram';
 // @ts-ignore
 import * as sctp from 'sctp';
 
-// Set node-sctp default PMTU to 1200.
 export default function(mediasoup): void
 {
 	describe('node-sctp', () =>
 	{
-		sctp.defaults({ PMTU: 1200 });
-
-		let worker: mediasoup.types.Worker;
-		let router: mediasoup.types.Router;
-		let transport: mediasoup.types.PlainTransport;
-		let dataProducer: mediasoup.types.DataProducer;
-		let dataConsumer: mediasoup.types.DataConsumer;
-		let udpSocket: dgram.Socket;
-		let sctpSocket: any;
-		let sctpSendStreamId: number;
-		let sctpSendStream: any;
-
-		beforeAll(async () =>
+		type TestContext =
 		{
-			worker = await mediasoup.createWorker();
-			router = await worker.createRouter();
-			transport = await router.createPlainTransport(
+			worker?: mediasoup.types.Worker;
+			router?: mediasoup.types.Router;
+			transport?: mediasoup.types.PlainTransport;
+			dataProducer?: mediasoup.types.DataProducer;
+			dataConsumer?: mediasoup.types.DataConsumer;
+			udpSocket?: dgram.Socket;
+			sctpSocket?: any;
+			sctpSendStreamId?: number;
+			sctpSendStream?: any;
+		};
+
+		const ctx: TestContext = {};
+
+		beforeEach(async () =>
+		{
+			// Set node-sctp default PMTU to 1200.
+			sctp.defaults({ PMTU: 1200 });
+
+			ctx.worker = await mediasoup.createWorker();
+			ctx.router = await ctx.worker.createRouter();
+			ctx.transport = await ctx.router.createPlainTransport(
 				{
 					listenIp       : '127.0.0.1', // https://github.com/nodejs/node/issues/14900
 					comedia        : true, // So we don't need to call transport.connect().
@@ -32,64 +37,46 @@ export default function(mediasoup): void
 				});
 
 			// Node UDP socket for SCTP.
-			udpSocket = dgram.createSocket({ type: 'udp4' });
+			ctx.udpSocket = dgram.createSocket({ type: 'udp4' });
 
-			await new Promise<void>((resolve) => udpSocket.bind(0, '127.0.0.1', resolve));
-
-			const remoteUdpIp = transport.tuple.localIp;
-			const remoteUdpPort = transport.tuple.localPort;
-			const { OS, MIS } = transport.sctpParameters!;
-
-			// Use UDP connected socket if Node >= 12.
-			if (typeof udpSocket.connect === 'function')
+			await new Promise<void>((resolve) =>
 			{
-				await new Promise<void>((resolve, reject) =>
+				ctx.udpSocket!.bind(0, '127.0.0.1', resolve);
+			});
+
+			const remoteUdpIp = ctx.transport.tuple.localIp;
+			const remoteUdpPort = ctx.transport.tuple.localPort;
+			const { OS, MIS } = ctx.transport.sctpParameters!;
+
+			await new Promise<void>((resolve, reject) =>
+			{
+				// @ts-ignore
+				ctx.udpSocket.connect(remoteUdpPort, remoteUdpIp, (error: Error) =>
 				{
-					// @ts-ignore
-					udpSocket.connect(remoteUdpPort, remoteUdpIp, (error: Error) =>
+					if (error)
 					{
-						if (error)
+						reject(error);
+
+						return;
+					}
+
+					ctx.sctpSocket = sctp.connect(
 						{
-							reject(error);
+							localPort    : 5000, // Required for SCTP over UDP in mediasoup.
+							port         : 5000, // Required for SCTP over UDP in mediasoup.
+							OS           : OS,
+							MIS          : MIS,
+							udpTransport : ctx.udpSocket
+						});
 
-							return;
-						}
-
-						sctpSocket = sctp.connect(
-							{
-								localPort    : 5000, // Required for SCTP over UDP in mediasoup.
-								port         : 5000, // Required for SCTP over UDP in mediasoup.
-								OS           : OS,
-								MIS          : MIS,
-								udpTransport : udpSocket
-							});
-
-						resolve();
-					});
+					resolve();
 				});
-			}
-			// Use UDP disconnected socket if Node < 12.
-			else
-			{
-				sctpSocket = sctp.connect(
-					{
-						localPort    : 5000, // Required for SCTP over UDP in mediasoup.
-						port         : 5000, // Required for SCTP over UDP in mediasoup.
-						OS           : OS,
-						MIS          : MIS,
-						udpTransport : udpSocket,
-						udpPeer      :
-						{
-							address : remoteUdpIp,
-							port    : remoteUdpPort
-						}
-					});
-			}
+			});
 
 			// Wait for the SCTP association to be open.
 			await Promise.race(
 				[
-					new Promise<void>((resolve) => sctpSocket.on('connect', resolve)),
+					new Promise<void>((resolve) => ctx.sctpSocket.on('connect', resolve)),
 					new Promise<void>((resolve, reject) => (
 						setTimeout(() => reject(new Error('SCTP connection timeout')), 3000)
 					))
@@ -97,15 +84,15 @@ export default function(mediasoup): void
 
 			// Create an explicit SCTP outgoing stream with id 123 (id 0 is already used
 			// by the implicit SCTP outgoing stream built-in the SCTP socket).
-			sctpSendStreamId = 123;
-			sctpSendStream = sctpSocket.createStream(sctpSendStreamId);
+			ctx.sctpSendStreamId = 123;
+			ctx.sctpSendStream = ctx.sctpSocket.createStream(ctx.sctpSendStreamId);
 
 			// Create a DataProducer with the corresponding SCTP stream id.
-			dataProducer = await transport.produceData(
+			ctx.dataProducer = await ctx.transport.produceData(
 				{
 					sctpStreamParameters :
 					{
-						streamId : sctpSendStreamId,
+						streamId : ctx.sctpSendStreamId,
 						ordered  : true
 					},
 					label    : 'node-sctp',
@@ -114,14 +101,16 @@ export default function(mediasoup): void
 
 			// Create a DataConsumer to receive messages from the DataProducer over the
 			// same transport.
-			dataConsumer = await transport.consumeData({ dataProducerId: dataProducer.id });
+			ctx.dataConsumer = await ctx.transport.consumeData(
+				{ dataProducerId: ctx.dataProducer.id }
+			);
 		});
 
-		afterAll(async () =>
+		afterEach(async () =>
 		{
-			udpSocket.close();
-			sctpSocket.end();
-			worker.close();
+			ctx.udpSocket?.close();
+			ctx.sctpSocket?.end();
+			ctx.worker?.close();
 
 			// NOTE: For some reason we have to wait a bit for the SCTP stuff to release
 			// internal things, otherwise Jest reports open handles. We don't care much
@@ -139,7 +128,7 @@ export default function(mediasoup): void
 			let numReceivedMessages = 0;
 
 			// It must be zero because it's the first DataConsumer on the transport.
-			expect(dataConsumer.sctpStreamParameters?.streamId).toBe(0);
+			expect(ctx.dataConsumer!.sctpStreamParameters?.streamId).toBe(0);
 
 			// eslint-disable-next-line no-async-promise-executor
 			await new Promise<void>(async (resolve, reject) =>
@@ -164,7 +153,7 @@ export default function(mediasoup): void
 						data.ppid = sctp.PPID.WEBRTC_BINARY;
 					}
 
-					sctpSendStream.write(data);
+					ctx.sctpSendStream!.write(data);
 					sentMessageBytes += data.byteLength;
 
 					if (id < numMessages)
@@ -173,11 +162,11 @@ export default function(mediasoup): void
 					}
 				}
 
-				sctpSocket.on('stream', onStream);
+				ctx.sctpSocket!.on('stream', onStream);
 
 				// Handle the generated SCTP incoming stream and SCTP messages receives on it.
 				// @ts-ignore
-				sctpSocket.on('stream', (stream, streamId) =>
+				ctx.sctpSocket.on('stream', (stream, streamId) =>
 				{
 					// It must be zero because it's the first SCTP incoming stream (so first
 					// DataConsumer).
@@ -231,27 +220,27 @@ export default function(mediasoup): void
 			expect(numReceivedMessages).toBe(numMessages);
 			expect(recvMessageBytes).toBe(sentMessageBytes);
 
-			await expect(dataProducer.getStats())
+			await expect(ctx.dataProducer!.getStats())
 				.resolves
 				.toMatchObject(
 					[
 						{
 							type             : 'data-producer',
-							label            : dataProducer.label,
-							protocol         : dataProducer.protocol,
+							label            : ctx.dataProducer!.label,
+							protocol         : ctx.dataProducer!.protocol,
 							messagesReceived : numMessages,
 							bytesReceived    : sentMessageBytes
 						}
 					]);
 
-			await expect(dataConsumer.getStats())
+			await expect(ctx.dataConsumer!.getStats())
 				.resolves
 				.toMatchObject(
 					[
 						{
 							type         : 'data-consumer',
-							label        : dataConsumer.label,
-							protocol     : dataConsumer.protocol,
+							label        : ctx.dataConsumer!.label,
+							protocol     : ctx.dataConsumer!.protocol,
 							messagesSent : numMessages,
 							bytesSent    : recvMessageBytes
 						}
