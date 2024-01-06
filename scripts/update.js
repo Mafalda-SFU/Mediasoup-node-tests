@@ -139,13 +139,13 @@ function isNotRustRelease({tag_name})
       continue
     }
 
-    if(path.startsWith('node/src/tests'))
+    if(path.startsWith('node/src/test'))
     {
       let path2 = path.split(sep)
       path2.shift()
       path2.shift()
-      // Ensure path fragment is exactly `tests/`, not something like `tests...`
-      if(path2[0] === 'tests') path2[0] = 'src'
+      // Ensure path fragment is exactly `test/`, not something like `test...`
+      if(path2[0] === 'test') path2[0] = 'src'
       path2 = path2.join(sep)
 
       switch(type)
