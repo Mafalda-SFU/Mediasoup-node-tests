@@ -189,6 +189,7 @@ function isNotRustRelease({tag_name})
               let describeName
               let imports = []
               let indent = ''
+              let insideImport = false
 
               for(let line of lines)
               {
@@ -199,7 +200,18 @@ function isNotRustRelease({tag_name})
                 }
 
                 if(line.startsWith('import'))
+                  insideImport = true
+
+                if(insideImport)
                 {
+                  if(!line.includes('from'))
+                  {
+                    content.push(line)
+                    continue
+                  }
+
+                  insideImport = false
+
                   // Ignore imports of mediasoup, since we are going to do
                   // dependency injection.
                   // TODO: generate type for `mediasoup`, or use
