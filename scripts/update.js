@@ -362,6 +362,6 @@ function isNotRustRelease({tag_name})
 
   await pkgJson.save()
 
-  // Print version
+  // Print new version
   console.log(version)
 })()

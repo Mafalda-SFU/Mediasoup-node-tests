@@ -64,7 +64,12 @@ jobs:
         if : ${{ steps.update.outputs.new_version != '' }}
         run: npm run release
 
+
+  #
   # Publish to registries and GitHub release
+  #
+
+  # GitHub Package Registry
   publish-gpr:
     if : ${{ needs.check_and_update.outputs.new_version != '' }}
     needs: check_and_update
@@ -89,6 +94,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
 
+  # NPM registry
   publish-npm-registry:
     if : ${{ needs.check_and_update.outputs.new_version != '' }}
     needs: check_and_update
@@ -112,6 +118,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
 
+  # GitHub release
   upload-to-github-release:
     if : ${{ needs.check_and_update.outputs.new_version != '' }}
     needs: check_and_update
