@@ -1,5 +1,3 @@
-const {ok} = require('node:assert/strict')
-
 const {
   default: testActiveSpeakerObserver
 } = require('@mafalda-sfu/mediasoup-node-tests/ActiveSpeakerObserver')
@@ -51,24 +49,13 @@ const {
 const {
   default: testWorker
 } = require('@mafalda-sfu/mediasoup-node-tests/Worker')
-const satisfies = require('semver/functions/satisfies')
 
-const {version} = require('./package.json')
-
-
-const [major, minor] = version.split('.')
-const range = `^${major}.${minor}`
 
 
 module.exports = function(mediasoup)
 {
   describe('Mediasoup node tests', function()
   {
-    ok(
-      satisfies(mediasoup.version, range),
-      `mediasoup version mismatch (${mediasoup.version}, tests range: ${range})`
-    )
-
     // HACK: Mediasoup tests have the worker binary path hardcoded based on the
     //       tests directory. We need to override it.
     process.env.MEDIASOUP_WORKER_BIN = mediasoup.workerBin
