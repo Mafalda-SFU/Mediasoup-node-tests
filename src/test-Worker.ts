@@ -13,19 +13,35 @@ export default function(mediasoup): void
 
 	describe('Worker', () =>
 	{
-		test('Worker.workerBin matches mediasoup-worker absolute path', () =>
-		{
+		test('Worker.workerBin matches mediasoup-worker absolute path', () => {
 			const workerBin = process.env.MEDIASOUP_WORKER_BIN
 				? process.env.MEDIASOUP_WORKER_BIN
 				: process.env.MEDIASOUP_BUILDTYPE === 'Debug'
-					? path.join(__dirname, '..', '..', '..', 'worker', 'out', 'Debug', 'mediasoup-worker')
-					: path.join(__dirname, '..', '..', '..', 'worker', 'out', 'Release', 'mediasoup-worker');
+					? path.join(
+							__dirname,
+							'..',
+							'..',
+							'..',
+							'worker',
+							'out',
+							'Debug',
+							'mediasoup-worker',
+						)
+					: path.join(
+							__dirname,
+							'..',
+							'..',
+							'..',
+							'worker',
+							'out',
+							'Release',
+							'mediasoup-worker',
+						);
 
 			expect(mediasoup.workerBin).toBe(workerBin);
 		});
 
-		test('createWorker() succeeds', async () =>
-		{
+		test('createWorker() succeeds', async () => {
 			const onObserverNewWorker = jest.fn();
 
 			mediasoup.observer.once('newworker', onObserverNewWorker);
@@ -41,20 +57,21 @@ export default function(mediasoup): void
 
 			worker1.close();
 
+			await new Promise<void>(resolve => worker1.on('subprocessclose', resolve));
+
 			expect(worker1.closed).toBe(true);
 			expect(worker1.died).toBe(false);
 
-			const worker2 = await mediasoup.createWorker<{ foo: number; bar?: string }>(
-				{
-					logLevel             : 'debug',
-					logTags              : [ 'info' ],
-					rtcMinPort           : 0,
-					rtcMaxPort           : 9999,
-					dtlsCertificateFile  : path.join(__dirname, 'data', 'dtls-cert.pem'),
-					dtlsPrivateKeyFile   : path.join(__dirname, 'data', 'dtls-key.pem'),
-					libwebrtcFieldTrials : 'WebRTC-Bwe-AlrLimitedBackoff/Disabled/',
-					appData              : { foo: 456 }
-				});
+			const worker2 = await mediasoup.createWorker<{ foo: number; bar?: string }>({
+				logLevel: 'debug',
+				logTags: ['info'],
+				rtcMinPort: 0,
+				rtcMaxPort: 9999,
+				dtlsCertificateFile: path.join(__dirname, 'data', 'dtls-cert.pem'),
+				dtlsPrivateKeyFile: path.join(__dirname, 'data', 'dtls-key.pem'),
+				libwebrtcFieldTrials: 'WebRTC-Bwe-AlrLimitedBackoff/Disabled/',
+				appData: { foo: 456 },
+			});
 
 			expect(worker2.constructor.name).toBe('Worker');
 			expect(typeof worker2.pid).toBe('number');
@@ -64,132 +81,129 @@ export default function(mediasoup): void
 
 			worker2.close();
 
+			await new Promise<void>(resolve => worker2.on('subprocessclose', resolve));
+
 			expect(worker2.closed).toBe(true);
 			expect(worker2.died).toBe(false);
 		}, 2000);
 
-		test('createWorker() with wrong settings rejects with TypeError', async () =>
-		{
+		test('createWorker() with wrong settings rejects with TypeError', async () => {
 			// @ts-ignore
-			await expect(mediasoup.createWorker({ logLevel: 'chicken' }))
-				.rejects
-				.toThrow(TypeError);
+			await expect(mediasoup.createWorker({ logLevel: 'chicken' })).rejects.toThrow(
+				TypeError,
+			);
 
-			await expect(mediasoup.createWorker({ rtcMinPort: 1000, rtcMaxPort: 999 }))
-				.rejects
-				.toThrow(TypeError);
+			await expect(
+				mediasoup.createWorker({ rtcMinPort: 1000, rtcMaxPort: 999 }),
+			).rejects.toThrow(TypeError);
 
 			// Port is from 0 to 65535.
-			await expect(mediasoup.createWorker({ rtcMinPort: 1000, rtcMaxPort: 65536 }))
-				.rejects
-				.toThrow(TypeError);
+			await expect(
+				mediasoup.createWorker({ rtcMinPort: 1000, rtcMaxPort: 65536 }),
+			).rejects.toThrow(TypeError);
 
-			await expect(mediasoup.createWorker({ dtlsCertificateFile: '/notfound/cert.pem' }))
-				.rejects
-				.toThrow(TypeError);
+			await expect(
+				mediasoup.createWorker({ dtlsCertificateFile: '/notfound/cert.pem' }),
+			).rejects.toThrow(TypeError);
 
-			await expect(mediasoup.createWorker({ dtlsPrivateKeyFile: '/notfound/priv.pem' }))
-				.rejects
-				.toThrow(TypeError);
+			await expect(
+				mediasoup.createWorker({ dtlsPrivateKeyFile: '/notfound/priv.pem' }),
+			).rejects.toThrow(TypeError);
+
+			await expect(
+				// @ts-ignore
+				mediasoup.createWorker({ appData: 'NOT-AN-OBJECT' }),
+			).rejects.toThrow(TypeError);
+		}, 2000);
+
+		test('worker.updateSettings() succeeds', async () => {
+			const worker = await mediasoup.createWorker();
+
+			await expect(
+				worker.updateSettings({ logLevel: 'debug', logTags: ['ice'] }),
+			).resolves.toBeUndefined();
+
+			worker.close();
+
+			await new Promise<void>(resolve => worker.on('subprocessclose', resolve));
+		}, 2000);
+
+		test('worker.updateSettings() with wrong settings rejects with TypeError', async () => {
+			const worker = await mediasoup.createWorker();
 
 			// @ts-ignore
-			await expect(mediasoup.createWorker({ appData: 'NOT-AN-OBJECT' }))
-				.rejects
-				.toThrow(TypeError);
-		}, 2000);
-
-		test('worker.updateSettings() succeeds', async () =>
-		{
-			const worker = await mediasoup.createWorker();
-
-			await expect(worker.updateSettings({ logLevel: 'debug', logTags: [ 'ice' ] }))
-				.resolves
-				.toBeUndefined();
+			await expect(worker.updateSettings({ logLevel: 'chicken' })).rejects.toThrow(
+				TypeError,
+			);
 
 			worker.close();
+
+			await new Promise<void>(resolve => worker.on('subprocessclose', resolve));
 		}, 2000);
 
-		test('worker.updateSettings() with wrong settings rejects with TypeError', async () =>
-		{
-			const worker = await mediasoup.createWorker();
-
-			// @ts-ignore
-			await expect(worker.updateSettings({ logLevel: 'chicken' }))
-				.rejects
-				.toThrow(TypeError);
-
-			worker.close();
-		}, 2000);
-
-		test('worker.updateSettings() rejects with InvalidStateError if closed', async () =>
-		{
+		test('worker.updateSettings() rejects with InvalidStateError if closed', async () => {
 			const worker = await mediasoup.createWorker();
 
 			worker.close();
 
-			await expect(worker.updateSettings({ logLevel: 'error' }))
-				.rejects
-				.toThrow(InvalidStateError);
+			await new Promise<void>(resolve => worker.on('subprocessclose', resolve));
+
+			await expect(worker.updateSettings({ logLevel: 'error' })).rejects.toThrow(
+				InvalidStateError,
+			);
 		}, 2000);
 
-		test('worker.dump() succeeds', async () =>
-		{
+		test('worker.dump() succeeds', async () => {
 			const worker = await mediasoup.createWorker();
 
-			await expect(worker.dump())
-				.resolves
-				.toMatchObject(
-					{
-						pid                    : worker.pid,
-						webRtcServerIds        : [],
-						routerIds              : [],
-						channelMessageHandlers :
-						{
-							channelRequestHandlers      : [],
-							channelNotificationHandlers : []
-						}
-					});
+			await expect(worker.dump()).resolves.toMatchObject({
+				pid: worker.pid,
+				webRtcServerIds: [],
+				routerIds: [],
+				channelMessageHandlers: {
+					channelRequestHandlers: [],
+					channelNotificationHandlers: [],
+				},
+			});
 
 			worker.close();
 		}, 2000);
 
-		test('worker.dump() rejects with InvalidStateError if closed', async () =>
-		{
+		test('worker.dump() rejects with InvalidStateError if closed', async () => {
 			const worker = await mediasoup.createWorker();
 
 			worker.close();
 
-			await expect(worker.dump())
-				.rejects
-				.toThrow(InvalidStateError);
+			await new Promise<void>(resolve => worker.on('subprocessclose', resolve));
+
+			await expect(worker.dump()).rejects.toThrow(InvalidStateError);
 		}, 2000);
 
-		test('worker.getResourceUsage() succeeds', async () =>
-		{
+		test('worker.getResourceUsage() succeeds', async () => {
 			const worker = await mediasoup.createWorker();
 
-			await expect(worker.getResourceUsage())
-				.resolves
-				.toMatchObject({});
+			await expect(worker.getResourceUsage()).resolves.toMatchObject({});
 
 			worker.close();
+
+			await new Promise<void>(resolve => worker.on('subprocessclose', resolve));
 		}, 2000);
 
-		test('worker.close() succeeds', async () =>
-		{
+		test('worker.close() succeeds', async () => {
 			const worker = await mediasoup.createWorker({ logLevel: 'warn' });
 			const onObserverClose = jest.fn();
 
 			worker.observer.once('close', onObserverClose);
 			worker.close();
 
+			await new Promise<void>(resolve => worker.on('subprocessclose', resolve));
+
 			expect(onObserverClose).toHaveBeenCalledTimes(1);
 			expect(worker.closed).toBe(true);
 			expect(worker.died).toBe(false);
 		}, 2000);
 
-		skipIfHasVirtualPids('Worker emits "died" if worker process died unexpectedly', async () =>
-		{
+		skipIfHasVirtualPids('Worker emits "died" if worker process died unexpectedly', async () => {
 			let onDied: ReturnType<typeof jest.fn>;
 			let onObserverClose: ReturnType<typeof jest.fn>;
 
@@ -200,30 +214,29 @@ export default function(mediasoup): void
 
 			worker1.observer.once('close', onObserverClose);
 
-			await new Promise<void>((resolve, reject) =>
-			{
-				worker1.on('died', () =>
-				{
+			await new Promise<void>((resolve, reject) => {
+				worker1.on('died', () => {
 					onDied();
 
-					if (onObserverClose.mock.calls.length > 0)
-					{
+					if (onObserverClose.mock.calls.length > 0) {
 						reject(
-							new Error('observer "close" event emitted before worker "died" event')
+							new Error(
+								'observer "close" event emitted before worker "died" event',
+							),
 						);
-					}
-					else if (worker1.closed)
-					{
+					} else if (worker1.closed) {
 						resolve();
-					}
-					else
-					{
+					} else {
 						reject(new Error('worker.closed is false'));
 					}
 				});
 
 				process.kill(worker1.pid, 'SIGINT');
 			});
+
+			if (!worker1.subprocessClosed) {
+				await new Promise<void>(resolve => worker1.on('subprocessclose', resolve));
+			}
 
 			expect(onDied).toHaveBeenCalledTimes(1);
 			expect(onObserverClose).toHaveBeenCalledTimes(1);
@@ -237,30 +250,29 @@ export default function(mediasoup): void
 
 			worker2.observer.once('close', onObserverClose);
 
-			await new Promise<void>((resolve, reject) =>
-			{
-				worker2.on('died', () =>
-				{
+			await new Promise<void>((resolve, reject) => {
+				worker2.on('died', () => {
 					onDied();
 
-					if (onObserverClose.mock.calls.length > 0)
-					{
+					if (onObserverClose.mock.calls.length > 0) {
 						reject(
-							new Error('observer "close" event emitted before worker "died" event')
+							new Error(
+								'observer "close" event emitted before worker "died" event',
+							),
 						);
-					}
-					else if (worker2.closed)
-					{
+					} else if (worker2.closed) {
 						resolve();
-					}
-					else
-					{
+					} else {
 						reject(new Error('worker.closed is false'));
 					}
 				});
 
 				process.kill(worker2.pid, 'SIGTERM');
 			});
+
+			if (!worker2.subprocessClosed) {
+				await new Promise<void>(resolve => worker2.on('subprocessclose', resolve));
+			}
 
 			expect(onDied).toHaveBeenCalledTimes(1);
 			expect(onObserverClose).toHaveBeenCalledTimes(1);
@@ -274,30 +286,29 @@ export default function(mediasoup): void
 
 			worker3.observer.once('close', onObserverClose);
 
-			await new Promise<void>((resolve, reject) =>
-			{
-				worker3.on('died', () =>
-				{
+			await new Promise<void>((resolve, reject) => {
+				worker3.on('died', () => {
 					onDied();
 
-					if (onObserverClose.mock.calls.length > 0)
-					{
+					if (onObserverClose.mock.calls.length > 0) {
 						reject(
-							new Error('observer "close" event emitted before worker "died" event')
+							new Error(
+								'observer "close" event emitted before worker "died" event',
+							),
 						);
-					}
-					else if (worker3.closed)
-					{
+					} else if (worker3.closed) {
 						resolve();
-					}
-					else
-					{
+					} else {
 						reject(new Error('worker.closed is false'));
 					}
 				});
 
 				process.kill(worker3.pid, 'SIGKILL');
 			});
+
+			if (!worker3.subprocessClosed) {
+				await new Promise<void>(resolve => worker3.on('subprocessclose', resolve));
+			}
 
 			expect(onDied).toHaveBeenCalledTimes(1);
 			expect(onObserverClose).toHaveBeenCalledTimes(1);
@@ -307,14 +318,11 @@ export default function(mediasoup): void
 
 		// Windows doesn't have some signals such as SIGPIPE, SIGALRM, SIGUSR1, SIGUSR2
 		// so we just skip this test in Windows.
-		if (os.platform() !== 'win32')
-		{
-			skipIfHasVirtualPids('worker process ignores PIPE, HUP, ALRM, USR1 and USR2 signals', async () =>
-			{
+		if (os.platform() !== 'win32') {
+			skipIfHasVirtualPids('worker process ignores PIPE, HUP, ALRM, USR1 and USR2 signals', async () => {
 				const worker = await mediasoup.createWorker({ logLevel: 'warn' });
 
-				await new Promise<void>((resolve, reject) =>
-				{
+				await new Promise<void>((resolve, reject) => {
 					worker.on('died', reject);
 
 					process.kill(worker.pid, 'SIGPIPE');
@@ -323,12 +331,11 @@ export default function(mediasoup): void
 					process.kill(worker.pid, 'SIGUSR1');
 					process.kill(worker.pid, 'SIGUSR2');
 
-					setTimeout(() =>
-					{
+					setTimeout(() => {
 						expect(worker.closed).toBe(false);
 
 						worker.close();
-						resolve();
+						worker.on('subprocessclose', resolve);
 					}, 2000);
 				});
 			}, 3000);

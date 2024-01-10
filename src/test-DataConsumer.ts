@@ -1,68 +1,79 @@
+import * as utils from './utils';
+
 export default function(mediasoup): void
 {
 	describe('DataConsumer', () =>
 	{
-		let worker: mediasoup.types.Worker;
-		let router: mediasoup.types.Router;
-		let transport1: mediasoup.types.WebRtcTransport;
-		let transport2: mediasoup.types.PlainTransport;
-		let transport3: mediasoup.types.DirectTransport;
-		let dataProducer: mediasoup.types.DataProducer;
-		let dataConsumer1: mediasoup.types.DataConsumer;
-		let dataConsumer2: mediasoup.types.DataConsumer;
-
-		const dataProducerParameters: mediasoup.types.DataProducerOptions =
-		{
-			sctpStreamParameters :
-			{
-				streamId          : 12345,
-				ordered           : false,
-				maxPacketLifeTime : 5000
-			},
-			label    : 'foo',
-			protocol : 'bar'
+		type TestContext = {
+			dataProducerOptions: mediasoup.types.DataProducerOptions;
+			worker?: mediasoup.types.Worker;
+			router?: mediasoup.types.Router;
+			webRtcTransport1?: mediasoup.types.WebRtcTransport;
+			webRtcTransport2?: mediasoup.types.WebRtcTransport;
+			directTransport?: mediasoup.types.DirectTransport;
+			dataProducer?: mediasoup.types.DataProducer;
 		};
 
-		beforeAll(async () =>
-		{
-			worker = await mediasoup.createWorker();
-			router = await worker.createRouter();
-			transport1 = await router.createWebRtcTransport(
-				{
-					listenIps  : [ '127.0.0.1' ],
-					enableSctp : true
-				});
-			transport2 = await router.createPlainTransport(
-				{
-					listenIp   : '127.0.0.1',
-					enableSctp : true
-				});
-			transport3 = await router.createDirectTransport();
-			dataProducer = await transport1.produceData(dataProducerParameters);
+		const ctx: TestContext = {
+			dataProducerOptions: utils.deepFreeze({
+				sctpStreamParameters: {
+					streamId: 12345,
+					ordered: false,
+					maxPacketLifeTime: 5000,
+				},
+				label: 'foo',
+				protocol: 'bar',
+			}),
+		};
+
+		beforeEach(async () => {
+			ctx.worker = await mediasoup.createWorker();
+			ctx.router = await ctx.worker.createRouter();
+			ctx.webRtcTransport1 = await ctx.router.createWebRtcTransport({
+				listenIps: ['127.0.0.1'],
+				enableSctp: true,
+			});
+			ctx.webRtcTransport2 = await ctx.router.createWebRtcTransport({
+				listenIps: ['127.0.0.1'],
+				enableSctp: true,
+			});
+			ctx.directTransport = await ctx.router.createDirectTransport();
+			ctx.dataProducer = await ctx.webRtcTransport1.produceData(
+				ctx.dataProducerOptions,
+			);
 		});
 
-		afterAll(() => worker.close());
+		afterEach(async () => {
+			ctx.worker?.close();
 
-		test('transport.consumeData() succeeds', async () =>
-		{
+			if (ctx.worker?.subprocessClosed === false) {
+				await new Promise<void>(
+					resolve => ctx.worker?.on('subprocessclose', resolve),
+				);
+			}
+		});
+
+		test('transport.consumeData() succeeds', async () => {
 			const onObserverNewDataConsumer = jest.fn();
 
-			transport2.observer.once('newdataconsumer', onObserverNewDataConsumer);
+			ctx.webRtcTransport2!.observer.once(
+				'newdataconsumer',
+				onObserverNewDataConsumer,
+			);
 
-			dataConsumer1 = await transport2.consumeData(
-				{
-					dataProducerId    : dataProducer.id,
-					maxPacketLifeTime : 4000,
-					// Valid values are 0...65535 so others and duplicated ones will be
-					// discarded.
-					subchannels       : [ 0, 1, 1, 1, 2, 65535, 65536, 65537, 100 ],
-					appData           : { baz: 'LOL' }
-				});
+			const dataConsumer1 = await ctx.webRtcTransport2!.consumeData({
+				dataProducerId: ctx.dataProducer!.id,
+				maxPacketLifeTime: 4000,
+				// Valid values are 0...65535 so others and duplicated ones will be
+				// discarded.
+				subchannels: [0, 1, 1, 1, 2, 65535, 65536, 65537, 100],
+				appData: { baz: 'LOL' },
+			});
 
 			expect(onObserverNewDataConsumer).toHaveBeenCalledTimes(1);
 			expect(onObserverNewDataConsumer).toHaveBeenCalledWith(dataConsumer1);
 			expect(typeof dataConsumer1.id).toBe('string');
-			expect(dataConsumer1.dataProducerId).toBe(dataProducer.id);
+			expect(dataConsumer1.dataProducerId).toBe(ctx.dataProducer!.id);
 			expect(dataConsumer1.closed).toBe(false);
 			expect(dataConsumer1.type).toBe('sctp');
 			expect(typeof dataConsumer1.sctpStreamParameters).toBe('object');
@@ -73,320 +84,330 @@ export default function(mediasoup): void
 			expect(dataConsumer1.label).toBe('foo');
 			expect(dataConsumer1.protocol).toBe('bar');
 			expect(dataConsumer1.paused).toBe(false);
-			expect(dataConsumer1.subchannels.sort((a, b) => a - b))
-				.toEqual([ 0, 1, 2, 100, 65535 ]);
+			expect(dataConsumer1.subchannels).toEqual(
+				expect.arrayContaining([0, 1, 2, 100, 65535]),
+			);
 			expect(dataConsumer1.appData).toEqual({ baz: 'LOL' });
 
-			const dump = await router.dump();
+			const dump = await ctx.router!.dump();
 
-			expect(dump.mapDataProducerIdDataConsumerIds)
-				.toEqual(expect.arrayContaining([
-					{ key: dataProducer.id, values: [ dataConsumer1.id ] }
-				]));
+			expect(dump.mapDataProducerIdDataConsumerIds).toEqual(
+				expect.arrayContaining([
+					{ key: ctx.dataProducer!.id, values: [dataConsumer1.id] },
+				]),
+			);
 
-			expect(dump.mapDataConsumerIdDataProducerId)
-				.toEqual(expect.arrayContaining([
-					{ key: dataConsumer1.id, value: dataProducer.id }
-				]));
+			expect(dump.mapDataConsumerIdDataProducerId).toEqual(
+				expect.arrayContaining([
+					{ key: dataConsumer1.id, value: ctx.dataProducer!.id },
+				]),
+			);
 
-			await expect(transport2.dump())
-				.resolves
-				.toMatchObject(
-					{
-						id              : transport2.id,
-						dataProducerIds : [],
-						dataConsumerIds : [ dataConsumer1.id ]
-					});
+			await expect(ctx.webRtcTransport2!.dump()).resolves.toMatchObject({
+				id: ctx.webRtcTransport2!.id,
+				dataProducerIds: [],
+				dataConsumerIds: [dataConsumer1.id],
+			});
 		}, 2000);
 
-		test('dataConsumer.dump() succeeds', async () =>
-		{
-			const data = await dataConsumer1.dump();
+		test('dataConsumer.dump() succeeds', async () => {
+			const dataConsumer = await ctx.webRtcTransport2!.consumeData({
+				dataProducerId: ctx.dataProducer!.id,
+				maxPacketLifeTime: 4000,
+				// Valid values are 0...65535 so others and duplicated ones will be
+				// discarded.
+				subchannels: [0, 1, 1, 1, 2, 65535, 65536, 65537, 100],
+				appData: { baz: 'LOL' },
+			});
 
-			expect(data.id).toBe(dataConsumer1.id);
-			expect(data.dataProducerId).toBe(dataConsumer1.dataProducerId);
-			expect(data.type).toBe('sctp');
-			expect(typeof data.sctpStreamParameters).toBe('object');
-			expect(data.sctpStreamParameters!.streamId)
-				.toBe(dataConsumer1.sctpStreamParameters?.streamId);
-			expect(data.sctpStreamParameters!.ordered).toBe(false);
-			expect(data.sctpStreamParameters!.maxPacketLifeTime).toBe(4000);
-			expect(data.sctpStreamParameters!.maxRetransmits).toBeUndefined();
-			expect(data.label).toBe('foo');
-			expect(data.protocol).toBe('bar');
-			expect(data.paused).toBe(false);
+			const dump = await dataConsumer.dump();
+
+			expect(dump.id).toBe(dataConsumer.id);
+			expect(dump.dataProducerId).toBe(dataConsumer.dataProducerId);
+			expect(dump.type).toBe('sctp');
+			expect(typeof dump.sctpStreamParameters).toBe('object');
+			expect(dump.sctpStreamParameters!.streamId).toBe(
+				dataConsumer.sctpStreamParameters?.streamId,
+			);
+			expect(dump.sctpStreamParameters!.ordered).toBe(false);
+			expect(dump.sctpStreamParameters!.maxPacketLifeTime).toBe(4000);
+			expect(dump.sctpStreamParameters!.maxRetransmits).toBeUndefined();
+			expect(dump.label).toBe('foo');
+			expect(dump.protocol).toBe('bar');
+			expect(dump.paused).toBe(false);
+			expect(dump.dataProducerPaused).toBe(false);
+			expect(dump.subchannels).toEqual(
+				expect.arrayContaining([0, 1, 2, 100, 65535]),
+			);
 		}, 2000);
 
-		test('dataConsumer.getStats() succeeds', async () =>
-		{
-			await expect(dataConsumer1.getStats())
-				.resolves
-				.toMatchObject(
-					[
-						{
-							type         : 'data-consumer',
-							label        : dataConsumer1.label,
-							protocol     : dataConsumer1.protocol,
-							messagesSent : 0,
-							bytesSent    : 0
-						}
-					]);
+		test('dataConsumer.getStats() succeeds', async () => {
+			const dataConsumer = await ctx.webRtcTransport2!.consumeData({
+				dataProducerId: ctx.dataProducer!.id,
+			});
+
+			await expect(dataConsumer.getStats()).resolves.toMatchObject([
+				{
+					type: 'data-consumer',
+					label: dataConsumer.label,
+					protocol: dataConsumer.protocol,
+					messagesSent: 0,
+					bytesSent: 0,
+				},
+			]);
 		}, 2000);
 
-		test('dataConsumer.setSubchannels() succeeds', async () =>
-		{
-			await dataConsumer1.setSubchannels([ 999, 999, 998, 65536 ]);
+		test('dataConsumer.setSubchannels() succeeds', async () => {
+			const dataConsumer = await ctx.webRtcTransport2!.consumeData({
+				dataProducerId: ctx.dataProducer!.id,
+			});
 
-			expect(dataConsumer1.subchannels.sort((a, b) => a - b))
-				.toEqual([ 0, 998, 999 ]);
+			await dataConsumer.setSubchannels([999, 999, 998, 65536]);
+
+			expect(dataConsumer.subchannels).toEqual(
+				expect.arrayContaining([0, 998, 999]),
+			);
 		}, 2000);
 
-		test('dataConsumer.addSubchannel() and .removeSubchannel() succeed', async () =>
-		{
-			await dataConsumer1.setSubchannels([ ]);
-			expect(dataConsumer1.subchannels).toEqual([ ]);
+		test('dataConsumer.addSubchannel() and .removeSubchannel() succeed', async () => {
+			const dataConsumer = await ctx.webRtcTransport2!.consumeData({
+				dataProducerId: ctx.dataProducer!.id,
+			});
 
-			await dataConsumer1.addSubchannel(5);
-			expect(dataConsumer1.subchannels.sort((a, b) => a - b)).toEqual([ 5 ]);
+			await dataConsumer.setSubchannels([]);
+			expect(dataConsumer.subchannels).toEqual([]);
 
-			await dataConsumer1.addSubchannel(10);
-			expect(dataConsumer1.subchannels.sort((a, b) => a - b)).toEqual([ 5, 10 ]);
+			await dataConsumer.addSubchannel(5);
+			expect(dataConsumer.subchannels).toEqual(expect.arrayContaining([5]));
 
-			await dataConsumer1.addSubchannel(5);
-			expect(dataConsumer1.subchannels.sort((a, b) => a - b)).toEqual([ 5, 10 ]);
+			await dataConsumer.addSubchannel(10);
+			expect(dataConsumer.subchannels).toEqual(expect.arrayContaining([5, 10]));
 
-			await dataConsumer1.removeSubchannel(666);
-			expect(dataConsumer1.subchannels.sort((a, b) => a - b)).toEqual([ 5, 10 ]);
+			await dataConsumer.addSubchannel(5);
+			expect(dataConsumer.subchannels).toEqual(expect.arrayContaining([5, 10]));
 
-			await dataConsumer1.removeSubchannel(5);
-			expect(dataConsumer1.subchannels.sort((a, b) => a - b)).toEqual([ 10 ]);
+			await dataConsumer.removeSubchannel(666);
+			expect(dataConsumer.subchannels).toEqual(expect.arrayContaining([5, 10]));
 
-			await dataConsumer1.setSubchannels([ ]);
-			expect(dataConsumer1.subchannels).toEqual([ ]);
+			await dataConsumer.removeSubchannel(5);
+			expect(dataConsumer.subchannels).toEqual(expect.arrayContaining([10]));
+
+			await dataConsumer.setSubchannels([]);
+			expect(dataConsumer.subchannels).toEqual([]);
 		}, 2000);
 
-		test('transport.consumeData() on a DirectTransport succeeds', async () =>
-		{
+		test('transport.consumeData() on a DirectTransport succeeds', async () => {
 			const onObserverNewDataConsumer = jest.fn();
 
-			transport3.observer.once('newdataconsumer', onObserverNewDataConsumer);
+			ctx.directTransport!.observer.once(
+				'newdataconsumer',
+				onObserverNewDataConsumer,
+			);
 
-			dataConsumer2 = await transport3.consumeData(
-				{
-					dataProducerId : dataProducer.id,
-					paused         : true,
-					appData        : { hehe: 'HEHE' }
-				});
+			const dataConsumer = await ctx.directTransport!.consumeData({
+				dataProducerId: ctx.dataProducer!.id,
+				paused: true,
+				appData: { hehe: 'HEHE' },
+			});
 
 			expect(onObserverNewDataConsumer).toHaveBeenCalledTimes(1);
-			expect(onObserverNewDataConsumer).toHaveBeenCalledWith(dataConsumer2);
-			expect(typeof dataConsumer2.id).toBe('string');
-			expect(dataConsumer2.dataProducerId).toBe(dataProducer.id);
-			expect(dataConsumer2.closed).toBe(false);
-			expect(dataConsumer2.type).toBe('direct');
-			expect(dataConsumer2.sctpStreamParameters).toBeUndefined();
-			expect(dataConsumer2.label).toBe('foo');
-			expect(dataConsumer2.protocol).toBe('bar');
-			expect(dataConsumer2.paused).toBe(true);
-			expect(dataConsumer2.appData).toEqual({ hehe: 'HEHE' });
+			expect(onObserverNewDataConsumer).toHaveBeenCalledWith(dataConsumer);
+			expect(typeof dataConsumer.id).toBe('string');
+			expect(dataConsumer.dataProducerId).toBe(ctx.dataProducer!.id);
+			expect(dataConsumer.closed).toBe(false);
+			expect(dataConsumer.type).toBe('direct');
+			expect(dataConsumer.sctpStreamParameters).toBeUndefined();
+			expect(dataConsumer.label).toBe('foo');
+			expect(dataConsumer.protocol).toBe('bar');
+			expect(dataConsumer.paused).toBe(true);
+			expect(dataConsumer.appData).toEqual({ hehe: 'HEHE' });
 
-			await expect(transport3.dump())
-				.resolves
-				.toMatchObject(
-					{
-						id              : transport3.id,
-						dataProducerIds : [],
-						dataConsumerIds : [ dataConsumer2.id ]
-					});
+			await expect(ctx.directTransport!.dump()).resolves.toMatchObject({
+				id: ctx.directTransport!.id,
+				dataProducerIds: [],
+				dataConsumerIds: [dataConsumer.id],
+			});
 		}, 2000);
 
-		test('dataConsumer.dump() on a DirectTransport succeeds', async () =>
-		{
-			const data = await dataConsumer2.dump();
+		test('dataConsumer.dump() on a DirectTransport succeeds', async () => {
+			const dataConsumer = await ctx.directTransport!.consumeData({
+				dataProducerId: ctx.dataProducer!.id,
+				paused: true,
+			});
 
-			expect(data.id).toBe(dataConsumer2.id);
-			expect(data.dataProducerId).toBe(dataConsumer2.dataProducerId);
-			expect(data.type).toBe('direct');
-			expect(data.sctpStreamParameters).toBeUndefined();
-			expect(data.label).toBe('foo');
-			expect(data.protocol).toBe('bar');
-			expect(data.paused).toBe(true);
+			const dump = await dataConsumer.dump();
+
+			expect(dump.id).toBe(dataConsumer.id);
+			expect(dump.dataProducerId).toBe(dataConsumer.dataProducerId);
+			expect(dump.type).toBe('direct');
+			expect(dump.sctpStreamParameters).toBeUndefined();
+			expect(dump.label).toBe('foo');
+			expect(dump.protocol).toBe('bar');
+			expect(dump.paused).toBe(true);
+			expect(dump.subchannels).toEqual([]);
 		}, 2000);
 
-		test('dataConsumer.getStats() on a DirectTransport succeeds', async () =>
-		{
-			await expect(dataConsumer2.getStats())
-				.resolves
-				.toMatchObject(
-					[
-						{
-							type         : 'data-consumer',
-							label        : dataConsumer2.label,
-							protocol     : dataConsumer2.protocol,
-							messagesSent : 0,
-							bytesSent    : 0
-						}
-					]);
+		test('dataConsumer.getStats() on a DirectTransport succeeds', async () => {
+			const dataConsumer = await ctx.directTransport!.consumeData({
+				dataProducerId: ctx.dataProducer!.id,
+			});
+
+			await expect(dataConsumer.getStats()).resolves.toMatchObject([
+				{
+					type: 'data-consumer',
+					label: dataConsumer.label,
+					protocol: dataConsumer.protocol,
+					messagesSent: 0,
+					bytesSent: 0,
+				},
+			]);
 		}, 2000);
 
-		test('dataConsumer.pause() and resume() succeed', async () =>
-		{
+		test('dataConsumer.pause() and resume() succeed', async () => {
 			const onObserverPause = jest.fn();
 			const onObserverResume = jest.fn();
 
-			dataConsumer1.observer.on('pause', onObserverPause);
-			dataConsumer1.observer.on('resume', onObserverResume);
+			const dataConsumer = await ctx.webRtcTransport2!.consumeData({
+				dataProducerId: ctx.dataProducer!.id,
+			});
 
-			let data;
+			dataConsumer.observer.on('pause', onObserverPause);
+			dataConsumer.observer.on('resume', onObserverResume);
 
-			await dataConsumer1.pause();
+			await dataConsumer.pause();
 
-			expect(dataConsumer1.paused).toBe(true);
+			expect(dataConsumer.paused).toBe(true);
 
-			data = await dataConsumer1.dump();
+			const dump1 = await dataConsumer.dump();
 
-			expect(data.paused).toBe(true);
+			expect(dump1.paused).toBe(true);
 
-			await dataConsumer1.resume();
+			await dataConsumer.resume();
 
-			expect(dataConsumer1.paused).toBe(false);
+			expect(dataConsumer.paused).toBe(false);
 
-			data = await dataConsumer1.dump();
+			const dump2 = await dataConsumer.dump();
 
-			expect(data.paused).toBe(false);
+			expect(dump2.paused).toBe(false);
 
 			// Even if we don't await for pause()/resume() completion, the observer must
 			// fire 'pause' and 'resume' events if state was the opposite.
-			dataConsumer1.pause();
-			dataConsumer1.resume();
-			dataConsumer1.pause();
-			dataConsumer1.pause();
-			dataConsumer1.pause();
-			await dataConsumer1.resume();
+			dataConsumer.pause();
+			dataConsumer.resume();
+			dataConsumer.pause();
+			dataConsumer.pause();
+			dataConsumer.pause();
+			await dataConsumer.resume();
 
 			expect(onObserverPause).toHaveBeenCalledTimes(3);
 			expect(onObserverResume).toHaveBeenCalledTimes(3);
 		}, 2000);
 
-		test('dataProducer.pause() and resume() emit events', async () =>
-		{
+		test('dataProducer.pause() and resume() emit events', async () => {
+			const dataConsumer = await ctx.webRtcTransport2!.consumeData({
+				dataProducerId: ctx.dataProducer!.id,
+			});
 			const promises = [];
 			const events: string[] = [];
-			
-			dataConsumer1.observer.once('resume', () => 
-			{
+
+			dataConsumer.observer.once('resume', () => {
 				events.push('resume');
 			});
 
-			dataConsumer1.observer.once('pause', () => 
-			{
+			dataConsumer.observer.once('pause', () => {
 				events.push('pause');
 			});
 
-			promises.push(dataProducer.pause());
-			promises.push(dataProducer.resume());
+			promises.push(ctx.dataProducer!.pause());
+			promises.push(ctx.dataProducer!.resume());
 
 			await Promise.all(promises);
 
 			// Must also wait a bit for the corresponding events in the data consumer.
-			await new Promise((resolve) => setTimeout(resolve, 100));
-			
-			expect(events).toEqual([ 'pause', 'resume' ]);
-			expect(dataConsumer1.paused).toBe(false);
+			await new Promise(resolve => setTimeout(resolve, 100));
+
+			expect(events).toEqual(['pause', 'resume']);
+			expect(dataConsumer.paused).toBe(false);
 		}, 2000);
 
-		test('dataConsumer.close() succeeds', async () =>
-		{
+		test('dataConsumer.close() succeeds', async () => {
 			const onObserverClose = jest.fn();
+			const dataConsumer = await ctx.webRtcTransport2!.consumeData({
+				dataProducerId: ctx.dataProducer!.id,
+			});
 
-			dataConsumer1.observer.once('close', onObserverClose);
-			dataConsumer1.close();
+			dataConsumer.observer.once('close', onObserverClose);
+			dataConsumer.close();
 
 			expect(onObserverClose).toHaveBeenCalledTimes(1);
-			expect(dataConsumer1.closed).toBe(true);
+			expect(dataConsumer.closed).toBe(true);
 
-			const dump = await router.dump();
+			const dump = await ctx.router!.dump();
 
-			expect(dump.mapDataProducerIdDataConsumerIds)
-				.toEqual(expect.arrayContaining([
-					{ key: dataProducer.id, values: [ dataConsumer2.id ] }
-				]));
+			expect(dump.mapDataProducerIdDataConsumerIds).toEqual(
+				expect.arrayContaining([{ key: ctx.dataProducer!.id, values: [] }]),
+			);
 
-			expect(dump.mapDataConsumerIdDataProducerId)
-				.toEqual(expect.arrayContaining([
-					{ key: dataConsumer2.id, value: dataProducer.id }
-				]));
+			expect(dump.mapDataConsumerIdDataProducerId).toEqual([]);
 
-			await expect(transport2.dump())
-				.resolves
-				.toMatchObject(
-					{
-						id              : transport2.id,
-						dataProducerIds : [],
-						dataConsumerIds : []
-					});
+			await expect(ctx.webRtcTransport2!.dump()).resolves.toMatchObject({
+				id: ctx.webRtcTransport2!.id,
+				dataProducerIds: [],
+				dataConsumerIds: [],
+			});
 		}, 2000);
 
-		test('Consumer methods reject if closed', async () =>
-		{
-			await expect(dataConsumer1.dump())
-				.rejects
-				.toThrow(Error);
+		test('Consumer methods reject if closed', async () => {
+			const dataConsumer = await ctx.webRtcTransport2!.consumeData({
+				dataProducerId: ctx.dataProducer!.id,
+			});
 
-			await expect(dataConsumer1.getStats())
-				.rejects
-				.toThrow(Error);
+			dataConsumer.close();
+
+			await expect(dataConsumer.dump()).rejects.toThrow(Error);
+
+			await expect(dataConsumer.getStats()).rejects.toThrow(Error);
 		}, 2000);
 
-		test('DataConsumer emits "dataproducerclose" if DataProducer is closed', async () =>
-		{
-			dataConsumer1 = await transport2.consumeData(
-				{
-					dataProducerId : dataProducer.id
-				});
-
+		test('DataConsumer emits "dataproducerclose" if DataProducer is closed', async () => {
+			const dataConsumer = await ctx.webRtcTransport2!.consumeData({
+				dataProducerId: ctx.dataProducer!.id,
+			});
 			const onObserverClose = jest.fn();
 
-			dataConsumer1.observer.once('close', onObserverClose);
+			dataConsumer.observer.once('close', onObserverClose);
 
-			await new Promise<void>((resolve) =>
-			{
-				dataConsumer1.on('dataproducerclose', resolve);
-				dataProducer.close();
+			await new Promise<void>(resolve => {
+				dataConsumer.on('dataproducerclose', resolve);
+
+				ctx.dataProducer!.close();
 			});
 
 			expect(onObserverClose).toHaveBeenCalledTimes(1);
-			expect(dataConsumer1.closed).toBe(true);
+			expect(dataConsumer.closed).toBe(true);
 		}, 2000);
 
-		test('DataConsumer emits "transportclose" if Transport is closed', async () =>
-		{
-			dataProducer = await transport1.produceData(dataProducerParameters);
-			dataConsumer1 = await transport2.consumeData(
-				{
-					dataProducerId : dataProducer.id
-				});
-
+		test('DataConsumer emits "transportclose" if Transport is closed', async () => {
+			const dataConsumer = await ctx.webRtcTransport2!.consumeData({
+				dataProducerId: ctx.dataProducer!.id,
+			});
 			const onObserverClose = jest.fn();
 
-			dataConsumer1.observer.once('close', onObserverClose);
+			dataConsumer.observer.once('close', onObserverClose);
 
-			await new Promise<void>((resolve) =>
-			{
-				dataConsumer1.on('transportclose', resolve);
-				transport2.close();
+			await new Promise<void>(resolve => {
+				dataConsumer.on('transportclose', resolve);
+
+				ctx.webRtcTransport2!.close();
 			});
 
 			expect(onObserverClose).toHaveBeenCalledTimes(1);
-			expect(dataConsumer1.closed).toBe(true);
+			expect(dataConsumer.closed).toBe(true);
 
-			await expect(router.dump())
-				.resolves
-				.toMatchObject(
-					{
-						mapDataProducerIdDataConsumerIds : {},
-						mapDataConsumerIdDataProducerId  : {}
-					});
+			await expect(ctx.router!.dump()).resolves.toMatchObject({
+				mapDataProducerIdDataConsumerIds: {},
+				mapDataConsumerIdDataProducerId: {},
+			});
 		}, 2000);
 	});
 }

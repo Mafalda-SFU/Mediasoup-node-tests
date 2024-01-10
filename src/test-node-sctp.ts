@@ -6,11 +6,10 @@ export default function(mediasoup): void
 {
 	describe('node-sctp', () =>
 	{
-		type TestContext =
-		{
+		type TestContext = {
 			worker?: mediasoup.types.Worker;
 			router?: mediasoup.types.Router;
-			transport?: mediasoup.types.PlainTransport;
+			plainTransport?: mediasoup.types.PlainTransport;
 			dataProducer?: mediasoup.types.DataProducer;
 			dataConsumer?: mediasoup.types.DataConsumer;
 			udpSocket?: dgram.Socket;
@@ -21,66 +20,60 @@ export default function(mediasoup): void
 
 		const ctx: TestContext = {};
 
-		beforeEach(async () =>
-		{
+		beforeEach(async () => {
 			// Set node-sctp default PMTU to 1200.
 			sctp.defaults({ PMTU: 1200 });
 
 			ctx.worker = await mediasoup.createWorker();
 			ctx.router = await ctx.worker.createRouter();
-			ctx.transport = await ctx.router.createPlainTransport(
-				{
-					listenIp       : '127.0.0.1', // https://github.com/nodejs/node/issues/14900
-					comedia        : true, // So we don't need to call transport.connect().
-					enableSctp     : true,
-					numSctpStreams : { OS: 256, MIS: 256 }
-				});
+			ctx.plainTransport = await ctx.router.createPlainTransport({
+				// https://github.com/nodejs/node/issues/14900.
+				listenIp: '127.0.0.1',
+				// So we don't need to call plainTransport.connect().
+				comedia: true,
+				enableSctp: true,
+				numSctpStreams: { OS: 256, MIS: 256 },
+			});
 
 			// Node UDP socket for SCTP.
 			ctx.udpSocket = dgram.createSocket({ type: 'udp4' });
 
-			await new Promise<void>((resolve) =>
-			{
+			await new Promise<void>(resolve => {
 				ctx.udpSocket!.bind(0, '127.0.0.1', resolve);
 			});
 
-			const remoteUdpIp = ctx.transport.tuple.localIp;
-			const remoteUdpPort = ctx.transport.tuple.localPort;
-			const { OS, MIS } = ctx.transport.sctpParameters!;
+			const remoteUdpIp = ctx.plainTransport.tuple.localIp;
+			const remoteUdpPort = ctx.plainTransport.tuple.localPort;
+			const { OS, MIS } = ctx.plainTransport.sctpParameters!;
 
-			await new Promise<void>((resolve, reject) =>
-			{
+			await new Promise<void>((resolve, reject) => {
 				// @ts-ignore
-				ctx.udpSocket.connect(remoteUdpPort, remoteUdpIp, (error: Error) =>
-				{
-					if (error)
-					{
+				ctx.udpSocket.connect(remoteUdpPort, remoteUdpIp, (error: Error) => {
+					if (error) {
 						reject(error);
 
 						return;
 					}
 
-					ctx.sctpSocket = sctp.connect(
-						{
-							localPort    : 5000, // Required for SCTP over UDP in mediasoup.
-							port         : 5000, // Required for SCTP over UDP in mediasoup.
-							OS           : OS,
-							MIS          : MIS,
-							udpTransport : ctx.udpSocket
-						});
+					ctx.sctpSocket = sctp.connect({
+						localPort: 5000, // Required for SCTP over UDP in mediasoup.
+						port: 5000, // Required for SCTP over UDP in mediasoup.
+						OS: OS,
+						MIS: MIS,
+						udpTransport: ctx.udpSocket,
+					});
 
 					resolve();
 				});
 			});
 
 			// Wait for the SCTP association to be open.
-			await Promise.race(
-				[
-					new Promise<void>((resolve) => ctx.sctpSocket.on('connect', resolve)),
-					new Promise<void>((resolve, reject) => (
-						setTimeout(() => reject(new Error('SCTP connection timeout')), 3000)
-					))
-				]);
+			await Promise.race([
+				new Promise<void>(resolve => ctx.sctpSocket.on('connect', resolve)),
+				new Promise<void>((resolve, reject) =>
+					setTimeout(() => reject(new Error('SCTP connection timeout')), 3000),
+				),
+			]);
 
 			// Create an explicit SCTP outgoing stream with id 123 (id 0 is already used
 			// by the implicit SCTP outgoing stream built-in the SCTP socket).
@@ -88,38 +81,40 @@ export default function(mediasoup): void
 			ctx.sctpSendStream = ctx.sctpSocket.createStream(ctx.sctpSendStreamId);
 
 			// Create a DataProducer with the corresponding SCTP stream id.
-			ctx.dataProducer = await ctx.transport.produceData(
-				{
-					sctpStreamParameters :
-					{
-						streamId : ctx.sctpSendStreamId,
-						ordered  : true
-					},
-					label    : 'node-sctp',
-					protocol : 'foo & bar 😀😀😀'
-				});
+			ctx.dataProducer = await ctx.plainTransport.produceData({
+				sctpStreamParameters: {
+					streamId: ctx.sctpSendStreamId,
+					ordered: true,
+				},
+				label: 'node-sctp',
+				protocol: 'foo & bar 😀😀😀',
+			});
 
 			// Create a DataConsumer to receive messages from the DataProducer over the
-			// same transport.
-			ctx.dataConsumer = await ctx.transport.consumeData(
-				{ dataProducerId: ctx.dataProducer.id }
-			);
+			// same plainTransport.
+			ctx.dataConsumer = await ctx.plainTransport.consumeData({
+				dataProducerId: ctx.dataProducer.id,
+			});
 		});
 
-		afterEach(async () =>
-		{
+		afterEach(async () => {
 			ctx.udpSocket?.close();
 			ctx.sctpSocket?.end();
 			ctx.worker?.close();
 
+			if (ctx.worker?.subprocessClosed === false) {
+				await new Promise<void>(
+					resolve => ctx.worker?.on('subprocessclose', resolve),
+				);
+			}
+
 			// NOTE: For some reason we have to wait a bit for the SCTP stuff to release
 			// internal things, otherwise Jest reports open handles. We don't care much
 			// honestly.
-			await new Promise((resolve) => setTimeout(resolve, 2000));
+			await new Promise(resolve => setTimeout(resolve, 1000));
 		});
 
-		test('ordered DataProducer delivers all SCTP messages to the DataConsumer', async () =>
-		{
+		test('ordered DataProducer delivers all SCTP messages to the DataConsumer', async () => {
 			const onStream = jest.fn();
 			const numMessages = 200;
 			let sentMessageBytes = 0;
@@ -127,28 +122,24 @@ export default function(mediasoup): void
 			let numSentMessages = 0;
 			let numReceivedMessages = 0;
 
-			// It must be zero because it's the first DataConsumer on the transport.
+			// It must be zero because it's the first DataConsumer on the plainTransport.
 			expect(ctx.dataConsumer!.sctpStreamParameters?.streamId).toBe(0);
 
 			// eslint-disable-next-line no-async-promise-executor
-			await new Promise<void>(async (resolve, reject) =>
-			{
+			await new Promise<void>(async (resolve, reject) => {
 				sendNextMessage();
 
-				async function sendNextMessage(): Promise<void>
-				{
+				async function sendNextMessage(): Promise<void> {
 					const id = ++numSentMessages;
 					const data = Buffer.from(String(id));
 
 					// Set ppid of type WebRTC DataChannel string.
-					if (id < numMessages / 2)
-					{
+					if (id < numMessages / 2) {
 						// @ts-ignore
 						data.ppid = sctp.PPID.WEBRTC_STRING;
 					}
 					// Set ppid of type WebRTC DataChannel binary.
-					else
-					{
+					else {
 						// @ts-ignore
 						data.ppid = sctp.PPID.WEBRTC_BINARY;
 					}
@@ -156,8 +147,7 @@ export default function(mediasoup): void
 					ctx.sctpSendStream!.write(data);
 					sentMessageBytes += data.byteLength;
 
-					if (id < numMessages)
-					{
+					if (id < numMessages) {
 						sendNextMessage();
 					}
 				}
@@ -166,20 +156,17 @@ export default function(mediasoup): void
 
 				// Handle the generated SCTP incoming stream and SCTP messages receives on it.
 				// @ts-ignore
-				ctx.sctpSocket.on('stream', (stream, streamId) =>
-				{
+				ctx.sctpSocket.on('stream', (stream, streamId) => {
 					// It must be zero because it's the first SCTP incoming stream (so first
 					// DataConsumer).
-					if (streamId !== 0)
-					{
+					if (streamId !== 0) {
 						reject(new Error(`streamId should be 0 but it is ${streamId}`));
 
 						return;
 					}
 
 					// @ts-ignore
-					stream.on('data', (data: Buffer) =>
-					{
+					stream.on('data', (data: Buffer) => {
 						++numReceivedMessages;
 						recvMessageBytes += data.byteLength;
 
@@ -187,26 +174,25 @@ export default function(mediasoup): void
 						// @ts-ignore
 						const ppid = data.ppid;
 
-						if (id !== numReceivedMessages)
-						{
+						if (id !== numReceivedMessages) {
 							reject(
-								new Error(`id ${id} in message should match numReceivedMessages ${numReceivedMessages}`)
+								new Error(
+									`id ${id} in message should match numReceivedMessages ${numReceivedMessages}`,
+								),
 							);
-						}
-						else if (id === numMessages)
-						{
+						} else if (id === numMessages) {
 							resolve();
-						}
-						else if (id < numMessages / 2 && ppid !== sctp.PPID.WEBRTC_STRING)
-						{
+						} else if (id < numMessages / 2 && ppid !== sctp.PPID.WEBRTC_STRING) {
 							reject(
-								new Error(`ppid in message with id ${id} should be ${sctp.PPID.WEBRTC_STRING} but it is ${ppid}`)
+								new Error(
+									`ppid in message with id ${id} should be ${sctp.PPID.WEBRTC_STRING} but it is ${ppid}`,
+								),
 							);
-						}
-						else if (id > numMessages / 2 && ppid !== sctp.PPID.WEBRTC_BINARY)
-						{
+						} else if (id > numMessages / 2 && ppid !== sctp.PPID.WEBRTC_BINARY) {
 							reject(
-								new Error(`ppid in message with id ${id} should be ${sctp.PPID.WEBRTC_BINARY} but it is ${ppid}`)
+								new Error(
+									`ppid in message with id ${id} should be ${sctp.PPID.WEBRTC_BINARY} but it is ${ppid}`,
+								),
 							);
 
 							return;
@@ -220,31 +206,25 @@ export default function(mediasoup): void
 			expect(numReceivedMessages).toBe(numMessages);
 			expect(recvMessageBytes).toBe(sentMessageBytes);
 
-			await expect(ctx.dataProducer!.getStats())
-				.resolves
-				.toMatchObject(
-					[
-						{
-							type             : 'data-producer',
-							label            : ctx.dataProducer!.label,
-							protocol         : ctx.dataProducer!.protocol,
-							messagesReceived : numMessages,
-							bytesReceived    : sentMessageBytes
-						}
-					]);
+			await expect(ctx.dataProducer!.getStats()).resolves.toMatchObject([
+				{
+					type: 'data-producer',
+					label: ctx.dataProducer!.label,
+					protocol: ctx.dataProducer!.protocol,
+					messagesReceived: numMessages,
+					bytesReceived: sentMessageBytes,
+				},
+			]);
 
-			await expect(ctx.dataConsumer!.getStats())
-				.resolves
-				.toMatchObject(
-					[
-						{
-							type         : 'data-consumer',
-							label        : ctx.dataConsumer!.label,
-							protocol     : ctx.dataConsumer!.protocol,
-							messagesSent : numMessages,
-							bytesSent    : recvMessageBytes
-						}
-					]);
+			await expect(ctx.dataConsumer!.getStats()).resolves.toMatchObject([
+				{
+					type: 'data-consumer',
+					label: ctx.dataConsumer!.label,
+					protocol: ctx.dataConsumer!.protocol,
+					messagesSent: numMessages,
+					bytesSent: recvMessageBytes,
+				},
+			]);
 		}, 10000);
 	});
 }
