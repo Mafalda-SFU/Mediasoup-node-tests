@@ -353,7 +353,7 @@ function isNotRustRelease({tag_name})
     dependencies,
     devDependencies: {
       ...devDependencies,
-      mediasoup: `^${version}`
+      mediasoup: version
     },
     optionalDependencies,
     peerDependencies,
