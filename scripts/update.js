@@ -305,8 +305,10 @@ function isNotRustRelease({tag_name})
 
                 else if(describeName === 'ortc')
                 {
-                  if(line.includes('.toThrow(UnsupportedError)'))
-                    line = line.replace('UnsupportedError', 'Error')
+                  if(line.includes('UnsupportedError'))
+                    line = line.replace(
+                      'UnsupportedError', '/*Unsupported*/Error'
+                    )
                 }
 
                 else if(describeName === 'Worker')
