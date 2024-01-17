@@ -5,14 +5,50 @@ on:
     branches:
       - main
   schedule:
-  - cron: "0 * * * *"
-  # Manual dispatch, only for testing purposes. See
-  # https://docs.github.com/en/actions/managing-workflow-runs/manually-running-a-workflow
-  workflow_dispatch:
+  - cron: "0 1/4 * * *"
 
 jobs:
-  # Check and update
-  check_and_update:
+  # Check for Mediasoup version update
+  check:
+    runs-on: ubuntu-latest
+
+    outputs:
+      new_version: ${{ steps.check.outputs.new_version }}
+
+    steps:
+      # Checkout
+      - uses: actions/checkout@v4
+
+      # Check for Mediasoup version update
+      - name: Check for Mediasoup version update
+        id: check
+        run: |
+          function getLatestVersion() {
+            curl -s "https://registry.npmjs.com/mediasoup" | jq -r '.["dist-tags"].latest'
+          }
+
+          pkgJsonVersion=$(jq -r '.version' ./package.json)
+          latestVersion=$(getLatestVersion)
+
+          if [[ "$latestVersion" < "$pkgJsonVersion" ]]; then
+            echo "Published mediasoup version ${latestVersion} is older than version ${pkgJsonVersion} from the package.json file. Maybe there's a mistake in the package.json version?" >&2
+            exit 1
+          fi
+
+          if [[ "$latestVersion" == "$pkgJsonVersion" ]]; then
+            echo "Mediasoup version ${pkgJsonVersion} at package.json file is equal to latest published one." >&2
+            exit
+          fi
+
+          echo "old version: $pkgJsonVersion"
+          echo "new version: ${latestVersion}"
+          echo "new_version=${latestVersion}" >> "$GITHUB_OUTPUT"
+
+
+  # Update version and dependencies
+  update:
+    needs: check
+    if: ${{ needs.check.outputs.new_version != '' }}
     runs-on: ubuntu-latest
 
     outputs:
@@ -20,23 +56,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          ssh-key: "${{secrets.COMMIT_KEY}}"
 
       # Setup Node.js
       - name: Node.js
         uses: actions/setup-node@v4
         with:
+          cache: 'npm'
           node-version: lts/-1
 
       # Install dependencies
       - run: npm ci --verbose
-
-      # Config git user name and email
-      - name: Config git user name and email
-        run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
 
       # Update tests
       - name: Update tests
@@ -47,12 +76,30 @@ jobs:
           echo "new version: ${new_version}"
           echo "new_version=${new_version}" >> "$GITHUB_OUTPUT"
 
-      # Update dependencies
+      # Update
+      - name: Update package version
+        if : ${{ steps.update.outputs.new_version != '' }}
+        run: |
+          tmpfile=$(mktemp)
+
+          cp package.json "$tmpfile" &&
+          jq \
+            --arg version "${{ steps.update.outputs.new_version }}" \
+            '.version |= $version' \
+            "$tmpfile" \
+          > package.json &&
+          rm -f "$tmpfile"
+
       - name: Update dependencies
         if : ${{ steps.update.outputs.new_version != '' }}
         run: |
+          # TODO: update dependencies from package.json
+
           npx npm-check-updates --target semver --upgrade
-          npm install --verbose
+
+      - name: Install updated dependencies
+        if : ${{ steps.update.outputs.new_version != '' }}
+        run: npm install --verbose
 
       # Ensure extracted tests are working
       - name: Run tests
@@ -62,7 +109,16 @@ jobs:
       # Commit and push changes
       - name: Commit and push changes
         if : ${{ steps.update.outputs.new_version != '' }}
-        run: npm run release
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+          git add .
+          git commit -m "chore(deps): update to mediasoup@${{ needs.check.outputs.new_version }}"
+          git tag "${{ needs.check.outputs.new_version }}"
+
+          git push
+          git push --tags
 
 
   #
@@ -71,20 +127,25 @@ jobs:
 
   # GitHub Package Registry
   publish-gpr:
-    if : ${{ needs.check_and_update.outputs.new_version != '' }}
-    needs: check_and_update
+    if : ${{ needs.update.outputs.new_version != '' }}
+    needs: update
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
       id-token: write
       packages: write
 
     steps:
+      # Checkout
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.check_and_update.outputs.new_version }}
+          ref: ${{ needs.update.outputs.new_version }}
+
+      # Setup Node.js
       - uses: actions/setup-node@v4
         with:
+          cache: 'npm'
           node-version: lts/-2
           registry-url: https://npm.pkg.github.com/
 
@@ -96,8 +157,8 @@ jobs:
 
   # NPM registry
   publish-npm-registry:
-    if : ${{ needs.check_and_update.outputs.new_version != '' }}
-    needs: check_and_update
+    if : ${{ needs.update.outputs.new_version != '' }}
+    needs: update
     runs-on: ubuntu-latest
 
     permissions:
@@ -106,9 +167,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.check_and_update.outputs.new_version }}
+          ref: ${{ needs.update.outputs.new_version }}
       - uses: actions/setup-node@v4
         with:
+          cache: 'npm'
           node-version: lts/-2
           registry-url: https://registry.npmjs.org/
 
@@ -120,8 +182,8 @@ jobs:
 
   # GitHub release
   upload-to-github-release:
-    if : ${{ needs.check_and_update.outputs.new_version != '' }}
-    needs: check_and_update
+    if : ${{ needs.update.outputs.new_version != '' }}
+    needs: update
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -129,9 +191,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.check_and_update.outputs.new_version }}
+          ref: ${{ needs.update.outputs.new_version }}
       - uses: actions/setup-node@v4
         with:
+          cache: 'npm'
           node-version: lts/-2
 
       # Create package
@@ -144,5 +207,5 @@ jobs:
         with:
           files: '*.tgz'
           generate_release_notes: true
-          tag_name: ${{ needs.check_and_update.outputs.new_version }}
+          tag_name: ${{ needs.update.outputs.new_version }}
           # --verify-tag

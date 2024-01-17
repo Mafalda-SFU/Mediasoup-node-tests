@@ -13,9 +13,7 @@
     "build:flatbuffers_gen": "rm -rf gen/ && mkdir -p gen/ && cp -R node_modules/mediasoup/node/lib/fbs/ gen/",
     "build:typescript": "tsc 1> /dev/null",
     "prepare": "npm run build",
-    "release": "scripts/release.js",
-    "test": "jest",
-    "update": "scripts/update.js"
+    "test": "jest"
   },
   "keywords": [
     "Mediasoup",
@@ -26,16 +24,17 @@
   "author": "Jesús Leganés-Combarro 'piranna' (https://piranna.github.io)",
   "license": "ISC",
   "dependencies": {
-    "@mafalda-sfu/mediasoup-ortc": "^v3.13.16",
+    "@mafalda-sfu/mediasoup-node-fbs": "^3.13.16",
+    "@mafalda-sfu/mediasoup-ortc": "^3.13.16",
     "flatbuffers": "^23.5.26",
-    "pick-port": "^2.0.0",
+    "pick-port": "^2.0.1",
     "pkg-dir": "~5.0.0",
     "sctp": "^1.0.0"
   },
   "devDependencies": {
     "@npmcli/package-json": "^5.0.0",
     "@types/jest": "^29.5.11",
-    "@types/node": "^20.11.0",
+    "@types/node": "^20.11.5",
     "jest": "^29.7.0",
     "mediasoup": "3.13.16",
     "semver": "^7.5.4",
