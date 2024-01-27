@@ -55,9 +55,10 @@ jobs:
 
             if [[ "$latestVersion" < "$pkgJsonVersion" ]]; then
               echo \
-                "Published version ${latestVersion} is older than version" \
-                "${pkgJsonVersion} from the package.json file. Maybe there's " \
-                "a mistake in the package.json version?" \
+                "Version ${latestVersion} of reference package ${packageName}" \
+                "is older than version ${pkgJsonVersion} from the project" \
+                "package.json file. Maybe there's a mistake in the version of" \
+                "the package.json file?" \
                 >&2
 
               exit 1
