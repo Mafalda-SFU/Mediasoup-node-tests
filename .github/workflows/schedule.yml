@@ -20,6 +20,9 @@ jobs:
     outputs:
       new_version: ${{ steps.check.outputs.new_version }}
 
+    env:
+      GH_TOKEN: ${{ github.token }}
+
     steps:
       # Checkout
       - uses: actions/checkout@v4
