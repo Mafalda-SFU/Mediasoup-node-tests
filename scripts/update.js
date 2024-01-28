@@ -6,10 +6,6 @@ const {Readable} = require('node:stream');
 const {text} = require('node:stream/consumers');
 const {createGunzip} = require('node:zlib');
 
-const PackageJson = require('@npmcli/package-json');
-const eq = require('semver/functions/eq.js');
-const lt = require('semver/functions/lt.js');
-const simpleGit = require('simple-git');
 const tar = require('tar-stream');
 
 
@@ -75,32 +71,14 @@ function filterOrtcUnsuportedError(line)
   return this.toString() !== 'ortc' || !line.includes('UnsupportedError')
 }
 
-function isNotRustRelease({tag_name})
-{
-  return !tag_name.startsWith('rust-')
-}
+
+const {argv: [,, version]} = process
 
 
 (async function()
 {
-  const [{tag_name: version, tarball_url}, pkgJson] = await Promise.all([
-    fetch(`https://api.github.com/repos/${repo}/releases`)
-      .then(res => res.json())
-      .then(releases => releases.find(isNotRustRelease)),
-    PackageJson.load('.')
-  ])
-
-  if(lt(version, pkgJson.content.version))
-    throw new Error(
-      `Published mediasoup version ${version} is older than version ` +
-      `${pkgJson.content.version} from the package.json file. Maybe there's ` +
-      `a mistake in the package.json version?`
-    )
-
-  if(eq(version, pkgJson.content.version)) return
-
   const [{body}] = await Promise.all([
-    fetch(tarball_url),
+    fetch(`https://api.github.com/repos/${repo}/tarball/${version}`),
     rm('src', options)
     .then(mkdir.bind(null, 'src', options))
     .then(writeFile.bind(null, 'src/Transport.ts', TransportTs, 'utf8'))
@@ -309,12 +287,4 @@ function isNotRustRelease({tag_name})
 
     entry.resume()
   }
-
-  // Check if there have been file changes
-  const git = simpleGit()
-  const {files: {length}} = await git.status()
-  if(!length) return
-
-  // Print new version
-  console.log(version)
 })()

@@ -6,16 +6,12 @@ on:
       - main
 
 jobs:
-  update:
-    runs-on: ubuntu-latest
+  test:
+    uses: mafalda-sfu/workflows/.github/workflows/main-no_coverage.yml@v1
 
-    steps:
-      # Init
-      - name: init
-        uses: Mafalda-SFU/Github-Actions-init@v1
-        with:
-          node-version: lts/-1
+    with:
+      node-version: lts/-1
+      registry-url: https://npm.pkg.github.com
 
-      # Ensure extracted tests are working
-      - name: Run tests
-        run: npm test
+    secrets:
+      NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -4,256 +4,28 @@ on:
   schedule:
   - cron: "0 1/4 * * *"
 
-env:
-  NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  dependencies-update-latest: "@mafalda-sfu/* mediasoup"
-  gpr-npm-version_gistID: ${{ secrets.GPR_NPM_VERSION_GISTID }}
-  node-version: lts/-1
-  reference-package-name: "@mafalda-sfu/mediasoup-ortc"
-  registry-url: https://registry.npmjs.org/
-
 jobs:
-  # Check for Mediasoup version update
-  check:
-    runs-on: ubuntu-latest
+  check_and_update:
+    uses: mafalda-sfu/workflows/.github/workflows/schedule.yml@v1
 
-    outputs:
-      new_version: ${{ steps.check.outputs.new_version }}
+    with:
+      destination-github-username: Mafalda-SFU
+      dependencies-update-latest: "@mafalda-sfu/* mediasoup"
+      destination-repository-name: Mafalda-SFU.github.io
+      node-version: lts/-1
+      reference-package-name: "@mafalda-sfu/mediasoup-ortc"
+      update-script: scripts/update.js
+      user-email: bot@mafalda.io
+      user-name: Mafalda Bot
 
-    env:
-      GH_TOKEN: ${{ github.token }}
+      # Docs
+      docs-coverage_gistID: ${{ vars.DOCS_COVERAGE_GISTID }}
 
-    steps:
-      # Checkout
-      - uses: actions/checkout@v4
+      # Publish GitHub Packages Registry
+      gpr-npm-version_gistID: ${{ vars.GPR_NPM_VERSION_GISTID }}
 
-      # Check for version update
-      - name: Check for version update
-        id: check
-        run: |
-          function getLatestVersion() {
-            local latestVersion
-
-            # Check if the package is hosted on GitHub Packages Registry
-            if [[ "$packageName" == *@*/* ]]; then
-              local tagsInfo=$(gh api repos/${packageName:1}/tags)
-              latestVersion=$(echo "$tagsInfo" | jq -r '.[0].name' | cut -c 2-)
-            else
-              latestVersion=$(npm show "$packageName" version)
-            fi
-
-            echo "$latestVersion"
-          }
-
-          function getPackageJsonVersion() {
-            jq -r '.version' ./package.json
-          }
-
-          function compareVersions() {
-            local latestVersion=$1
-            local pkgJsonVersion=$2
-
-            if [[ "$latestVersion" < "$pkgJsonVersion" ]]; then
-              echo \
-                "Version ${latestVersion} of reference package ${packageName}" \
-                "is older than version ${pkgJsonVersion} from the project" \
-                "package.json file. Maybe there's a mistake in the version of" \
-                "the package.json file?" \
-                >&2
-
-              exit 1
-            fi
-
-            if [[ "$latestVersion" == "$pkgJsonVersion" ]]; then
-              echo \
-                "Version ${pkgJsonVersion} in the package.json file is equal" \
-                "to the latest published version." \
-                >&2
-
-              exit
-            fi
-          }
-
-          packageName="${{ env.reference-package-name }}"
-
-          pkgJsonVersion=$(getPackageJsonVersion)
-          latestVersion=$(getLatestVersion)
-
-          compareVersions "$latestVersion" "$pkgJsonVersion"
-
-          echo "old version: $pkgJsonVersion"
-          echo "new version: ${latestVersion}"
-          echo "new_version=${latestVersion}" >> "$GITHUB_OUTPUT"
-
-  # Update version and dependencies
-  update:
-    needs: check
-    if: ${{ needs.check.outputs.new_version != '' }}
-    runs-on: ubuntu-latest
-
-    outputs:
-      new_version: ${{ steps.update.outputs.new_version }}
-
-    steps:
-      # Init
-      - name: init
-        uses: Mafalda-SFU/Github-Actions-init@v1
-        with:
-          NODE_AUTH_TOKEN: ${{ env.node_auth_token }}
-          node-version: ${{ env.node-version }}
-
-      # Update tests
-      - name: Update tests
-        id: update
-        run: |
-          echo "old version: `node -p \"require('./package.json').version\"`"
-
-          new_version=`scripts/update.js`
-
-          echo "new version: ${new_version}"
-          echo "new_version=${new_version}" >> "$GITHUB_OUTPUT"
-
-      # Update
-      - name: Update package version
-        if : ${{ steps.update.outputs.new_version != '' }}
-        run: |
-          tmpfile=$(mktemp)
-
-          cp package.json "$tmpfile" &&
-          jq \
-            --arg version "${{ steps.update.outputs.new_version }}" \
-            '.version |= $version' \
-            "$tmpfile" \
-          > package.json &&
-          rm -f "$tmpfile"
-
-      - name: Update latest dependencies
-        if : ${{ steps.update.outputs.new_version != '' && env.dependencies-update-latest != '' }}
-        run: |
-          npx npm-check-updates \
-            --target latest \
-            --upgrade ${{ env.dependencies-update-latest }}
-
-      - name: Update semver dependencies
-        if : ${{ steps.update.outputs.new_version != '' }}
-        run: npx npm-check-updates --target semver --upgrade
-
-      - name: Install updated dependencies
-        if : ${{ steps.update.outputs.new_version != '' }}
-        run: npm install --verbose
-
-      # Ensure extracted tests are working
-      - name: Run tests
-        if : ${{ steps.update.outputs.new_version != '' }}
-        run: npm test
-
-      # Commit and push changes
-      - name: Commit and push changes
-        if : ${{ steps.update.outputs.new_version != '' }}
-        run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-
-          git add .
-          git commit \
-            -m "chore(deps): update to mediasoup@${{ steps.update.outputs.new_version }}"
-          git tag "${{ steps.update.outputs.new_version }}"
-
-          git push
-          git push --tags
-
-
-  #
-  # Publish to registries and GitHub release
-  #
-
-  # GitHub Package Registry
-  publish-gpr:
-    needs: update
-    if: ${{ needs.update.outputs.new_version != '' }}
-    runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
-      id-token: write
-      packages: write
-
-    steps:
-      # Init
-      - name: init
-        uses: Mafalda-SFU/Github-Actions-init@v1
-        with:
-          NODE_AUTH_TOKEN: ${{ env.node_auth_token }}
-          node-version: ${{ env.node-version }}
-          ref: ${{ needs.update.outputs.new_version }}
-          registry-url: https://npm.pkg.github.com/
-
-      # Publish
-      - run: npm publish --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ env.node_auth_token }}
-
-      # Badge
-      - name: Github Package Registry version badge
-        uses: Schneegans/dynamic-badges-action@v1.7.0
-        with:
-          auth: ${{ secrets.GIST_SECRET }}
-          filename: ${{ github.event.repository.name }}.json
-          gistID: ${{ env.gpr-npm-version_gistID }}
-          label: 📦 GPR/npm
-          message: ${{ needs.update.outputs.new_version }}
-
-  # NPM registry
-  publish-npm-registry:
-    needs: update
-    if: ${{ needs.update.outputs.new_version != '' }}
-    runs-on: ubuntu-latest
-
-    permissions:
-      id-token: write
-
-    steps:
-      # Init
-      - name: init
-        uses: Mafalda-SFU/Github-Actions-init@v1
-        with:
-          NODE_AUTH_TOKEN: ${{ env.node_auth_token }}
-          node-version: ${{ env.node-version }}
-          ref: ${{ needs.update.outputs.new_version }}
-          registry-url: https://registry.npmjs.org/
-
-      # Publish
-      - run: npm publish --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.npm_token}}
-
-  # GitHub release
-  upload-to-github-release:
-    needs: update
-    if: ${{ needs.update.outputs.new_version != '' }}
-    runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-
-    steps:
-      # Init
-      - name: init
-        uses: Mafalda-SFU/Github-Actions-init@v1
-        with:
-          NODE_AUTH_TOKEN: ${{ env.node_auth_token }}
-          node-version: ${{ env.node-version }}
-          ref: ${{ needs.update.outputs.new_version }}
-          registry-url: ${{ env.registry-url }}
-
-      # Create package
-      - run: npm pack
-
-      # Create release
-      - name: Create release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: '*.tgz'
-          generate_release_notes: true
-          tag_name: ${{ needs.update.outputs.new_version }}
-          # --verify-tag
+    secrets:
+      GIST_SECRET: ${{ secrets.GIST_SECRET }}
+      npm_token: ${{ secrets.npm_token }}
+      SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
