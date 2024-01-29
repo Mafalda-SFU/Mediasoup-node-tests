@@ -72,7 +72,7 @@ function filterOrtcUnsuportedError(line)
 }
 
 
-const {argv: [,, version]} = process
+const {argv: [,, version]} = process;
 
 
 (async function()
