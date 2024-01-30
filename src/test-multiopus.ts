@@ -111,15 +111,15 @@ export default function(mediasoup): void
 			ctx.worker?.close();
 
 			if (ctx.worker?.subprocessClosed === false) {
-				await new Promise<void>(
-					resolve => ctx.worker?.on('subprocessclose', resolve),
+				await new Promise<void>(resolve =>
+					ctx.worker?.on('subprocessclose', resolve)
 				);
 			}
 		});
 
 		test('produce() and consume() succeed', async () => {
 			const audioProducer = await ctx.webRtcTransport!.produce(
-				ctx.audioProducerOptions,
+				ctx.audioProducerOptions
 			);
 
 			expect(audioProducer.rtpParameters.codecs).toEqual([
@@ -142,7 +142,7 @@ export default function(mediasoup): void
 				ctx.router!.canConsume({
 					producerId: audioProducer.id,
 					rtpCapabilities: ctx.consumerDeviceCapabilities,
-				}),
+				})
 			).toBe(true);
 
 			const audioConsumer = await ctx.webRtcTransport!.consume({
@@ -187,7 +187,7 @@ export default function(mediasoup): void
 							},
 						],
 					},
-				}),
+				})
 			).rejects.toThrow(UnsupportedError);
 
 			await expect(
@@ -209,13 +209,13 @@ export default function(mediasoup): void
 							},
 						],
 					},
-				}),
+				})
 			).rejects.toThrow(UnsupportedError);
 		}, 2000);
 
 		test('fails to consume wrong channels', async () => {
 			const audioProducer = await ctx.webRtcTransport!.produce(
-				ctx.audioProducerOptions,
+				ctx.audioProducerOptions
 			);
 
 			const localConsumerDeviceCapabilities: mediasoup.types.RtpCapabilities = {
@@ -239,14 +239,14 @@ export default function(mediasoup): void
 				!ctx.router!.canConsume({
 					producerId: audioProducer.id,
 					rtpCapabilities: localConsumerDeviceCapabilities,
-				}),
+				})
 			).toBe(true);
 
 			await expect(
 				ctx.webRtcTransport!.consume({
 					producerId: audioProducer.id,
 					rtpCapabilities: localConsumerDeviceCapabilities,
-				}),
+				})
 			).rejects.toThrow(Error);
 		}, 2000);
 	});

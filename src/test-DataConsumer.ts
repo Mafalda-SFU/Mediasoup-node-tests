@@ -39,7 +39,7 @@ export default function(mediasoup): void
 			});
 			ctx.directTransport = await ctx.router.createDirectTransport();
 			ctx.dataProducer = await ctx.webRtcTransport1.produceData(
-				ctx.dataProducerOptions,
+				ctx.dataProducerOptions
 			);
 		});
 
@@ -47,8 +47,8 @@ export default function(mediasoup): void
 			ctx.worker?.close();
 
 			if (ctx.worker?.subprocessClosed === false) {
-				await new Promise<void>(
-					resolve => ctx.worker?.on('subprocessclose', resolve),
+				await new Promise<void>(resolve =>
+					ctx.worker?.on('subprocessclose', resolve)
 				);
 			}
 		});
@@ -58,7 +58,7 @@ export default function(mediasoup): void
 
 			ctx.webRtcTransport2!.observer.once(
 				'newdataconsumer',
-				onObserverNewDataConsumer,
+				onObserverNewDataConsumer
 			);
 
 			const dataConsumer1 = await ctx.webRtcTransport2!.consumeData({
@@ -85,7 +85,7 @@ export default function(mediasoup): void
 			expect(dataConsumer1.protocol).toBe('bar');
 			expect(dataConsumer1.paused).toBe(false);
 			expect(dataConsumer1.subchannels).toEqual(
-				expect.arrayContaining([0, 1, 2, 100, 65535]),
+				expect.arrayContaining([0, 1, 2, 100, 65535])
 			);
 			expect(dataConsumer1.appData).toEqual({ baz: 'LOL' });
 
@@ -94,13 +94,13 @@ export default function(mediasoup): void
 			expect(dump.mapDataProducerIdDataConsumerIds).toEqual(
 				expect.arrayContaining([
 					{ key: ctx.dataProducer!.id, values: [dataConsumer1.id] },
-				]),
+				])
 			);
 
 			expect(dump.mapDataConsumerIdDataProducerId).toEqual(
 				expect.arrayContaining([
 					{ key: dataConsumer1.id, value: ctx.dataProducer!.id },
-				]),
+				])
 			);
 
 			await expect(ctx.webRtcTransport2!.dump()).resolves.toMatchObject({
@@ -127,7 +127,7 @@ export default function(mediasoup): void
 			expect(dump.type).toBe('sctp');
 			expect(typeof dump.sctpStreamParameters).toBe('object');
 			expect(dump.sctpStreamParameters!.streamId).toBe(
-				dataConsumer.sctpStreamParameters?.streamId,
+				dataConsumer.sctpStreamParameters?.streamId
 			);
 			expect(dump.sctpStreamParameters!.ordered).toBe(false);
 			expect(dump.sctpStreamParameters!.maxPacketLifeTime).toBe(4000);
@@ -137,7 +137,7 @@ export default function(mediasoup): void
 			expect(dump.paused).toBe(false);
 			expect(dump.dataProducerPaused).toBe(false);
 			expect(dump.subchannels).toEqual(
-				expect.arrayContaining([0, 1, 2, 100, 65535]),
+				expect.arrayContaining([0, 1, 2, 100, 65535])
 			);
 		}, 2000);
 
@@ -165,7 +165,7 @@ export default function(mediasoup): void
 			await dataConsumer.setSubchannels([999, 999, 998, 65536]);
 
 			expect(dataConsumer.subchannels).toEqual(
-				expect.arrayContaining([0, 998, 999]),
+				expect.arrayContaining([0, 998, 999])
 			);
 		}, 2000);
 
@@ -201,7 +201,7 @@ export default function(mediasoup): void
 
 			ctx.directTransport!.observer.once(
 				'newdataconsumer',
-				onObserverNewDataConsumer,
+				onObserverNewDataConsumer
 			);
 
 			const dataConsumer = await ctx.directTransport!.consumeData({
@@ -345,7 +345,7 @@ export default function(mediasoup): void
 			const dump = await ctx.router!.dump();
 
 			expect(dump.mapDataProducerIdDataConsumerIds).toEqual(
-				expect.arrayContaining([{ key: ctx.dataProducer!.id, values: [] }]),
+				expect.arrayContaining([{ key: ctx.dataProducer!.id, values: [] }])
 			);
 
 			expect(dump.mapDataConsumerIdDataProducerId).toEqual([]);

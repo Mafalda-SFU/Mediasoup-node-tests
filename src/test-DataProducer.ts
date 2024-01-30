@@ -51,8 +51,8 @@ export default function(mediasoup): void
 			ctx.worker?.close();
 
 			if (ctx.worker?.subprocessClosed === false) {
-				await new Promise<void>(
-					resolve => ctx.worker?.on('subprocessclose', resolve),
+				await new Promise<void>(resolve =>
+					ctx.worker?.on('subprocessclose', resolve)
 				);
 			}
 		});
@@ -62,11 +62,11 @@ export default function(mediasoup): void
 
 			ctx.webRtcTransport1!.observer.once(
 				'newdataproducer',
-				onObserverNewDataProducer,
+				onObserverNewDataProducer
 			);
 
 			const dataProducer1 = await ctx.webRtcTransport1!.produceData(
-				ctx.dataProducerOptions1,
+				ctx.dataProducerOptions1
 			);
 
 			expect(onObserverNewDataProducer).toHaveBeenCalledTimes(1);
@@ -87,7 +87,7 @@ export default function(mediasoup): void
 			const dump = await ctx.router!.dump();
 
 			expect(dump.mapDataProducerIdDataConsumerIds).toEqual(
-				expect.arrayContaining([{ key: dataProducer1.id, values: [] }]),
+				expect.arrayContaining([{ key: dataProducer1.id, values: [] }])
 			);
 
 			expect(dump.mapDataConsumerIdDataProducerId.length).toBe(0);
@@ -104,11 +104,11 @@ export default function(mediasoup): void
 
 			ctx.webRtcTransport2!.observer.once(
 				'newdataproducer',
-				onObserverNewDataProducer,
+				onObserverNewDataProducer
 			);
 
 			const dataProducer2 = await ctx.webRtcTransport2!.produceData(
-				ctx.dataProducerOptions2,
+				ctx.dataProducerOptions2
 			);
 
 			expect(onObserverNewDataProducer).toHaveBeenCalledTimes(1);
@@ -129,7 +129,7 @@ export default function(mediasoup): void
 			const dump = await ctx.router!.dump();
 
 			expect(dump.mapDataProducerIdDataConsumerIds).toEqual(
-				expect.arrayContaining([{ key: dataProducer2.id, values: [] }]),
+				expect.arrayContaining([{ key: dataProducer2.id, values: [] }])
 			);
 
 			expect(dump.mapDataConsumerIdDataProducerId.length).toBe(0);
@@ -143,7 +143,7 @@ export default function(mediasoup): void
 
 		test('webRtcTransport1.produceData() with wrong arguments rejects with TypeError', async () => {
 			await expect(ctx.webRtcTransport1!.produceData({})).rejects.toThrow(
-				TypeError,
+				TypeError
 			);
 
 			// Missing or empty sctpStreamParameters.streamId.
@@ -151,7 +151,7 @@ export default function(mediasoup): void
 				ctx.webRtcTransport1!.produceData({
 					// @ts-ignore
 					sctpStreamParameters: { foo: 'foo' },
-				}),
+				})
 			).rejects.toThrow(TypeError);
 		}, 2000);
 
@@ -163,7 +163,7 @@ export default function(mediasoup): void
 					sctpStreamParameters: {
 						streamId: 666,
 					},
-				}),
+				})
 			).rejects.toThrow(Error);
 		}, 2000);
 
@@ -175,13 +175,13 @@ export default function(mediasoup): void
 						ordered: true,
 						maxPacketLifeTime: 4000,
 					},
-				}),
+				})
 			).rejects.toThrow(TypeError);
 		}, 2000);
 
 		test('dataProducer.dump() succeeds', async () => {
 			const dataProducer1 = await ctx.webRtcTransport1!.produceData(
-				ctx.dataProducerOptions1,
+				ctx.dataProducerOptions1
 			);
 
 			const dump1 = await dataProducer1.dump();
@@ -198,7 +198,7 @@ export default function(mediasoup): void
 			expect(dump1.paused).toBe(false);
 
 			const dataProducer2 = await ctx.webRtcTransport2!.produceData(
-				ctx.dataProducerOptions2,
+				ctx.dataProducerOptions2
 			);
 
 			const dump2 = await dataProducer2.dump();
@@ -217,7 +217,7 @@ export default function(mediasoup): void
 
 		test('dataProducer.getStats() succeeds', async () => {
 			const dataProducer1 = await ctx.webRtcTransport1!.produceData(
-				ctx.dataProducerOptions1,
+				ctx.dataProducerOptions1
 			);
 
 			await expect(dataProducer1.getStats()).resolves.toMatchObject([
@@ -231,7 +231,7 @@ export default function(mediasoup): void
 			]);
 
 			const dataProducer2 = await ctx.webRtcTransport2!.produceData(
-				ctx.dataProducerOptions2,
+				ctx.dataProducerOptions2
 			);
 
 			await expect(dataProducer2.getStats()).resolves.toMatchObject([
@@ -247,7 +247,7 @@ export default function(mediasoup): void
 
 		test('dataProducer.pause() and resume() succeed', async () => {
 			const dataProducer1 = await ctx.webRtcTransport1!.produceData(
-				ctx.dataProducerOptions1,
+				ctx.dataProducerOptions1
 			);
 
 			const onObserverPause = jest.fn();
@@ -287,7 +287,7 @@ export default function(mediasoup): void
 
 		test('producer.pause() and resume() emit events', async () => {
 			const dataProducer1 = await ctx.webRtcTransport1!.produceData(
-				ctx.dataProducerOptions1,
+				ctx.dataProducerOptions1
 			);
 
 			const promises = [];
@@ -312,7 +312,7 @@ export default function(mediasoup): void
 
 		test('dataProducer.close() succeeds', async () => {
 			const dataProducer1 = await ctx.webRtcTransport1!.produceData(
-				ctx.dataProducerOptions1,
+				ctx.dataProducerOptions1
 			);
 
 			const onObserverClose = jest.fn();
@@ -337,7 +337,7 @@ export default function(mediasoup): void
 
 		test('DataProducer methods reject if closed', async () => {
 			const dataProducer1 = await ctx.webRtcTransport1!.produceData(
-				ctx.dataProducerOptions1,
+				ctx.dataProducerOptions1
 			);
 
 			dataProducer1.close();
@@ -349,7 +349,7 @@ export default function(mediasoup): void
 
 		test('DataProducer emits "transportclose" if Transport is closed', async () => {
 			const dataProducer2 = await ctx.webRtcTransport2!.produceData(
-				ctx.dataProducerOptions2,
+				ctx.dataProducerOptions2
 			);
 
 			const onObserverClose = jest.fn();

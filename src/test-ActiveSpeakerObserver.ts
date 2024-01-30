@@ -34,8 +34,8 @@ export default function(mediasoup): void
 			ctx.worker?.close();
 
 			if (ctx.worker?.subprocessClosed === false) {
-				await new Promise<void>(
-					resolve => ctx.worker?.on('subprocessclose', resolve),
+				await new Promise<void>(resolve =>
+					ctx.worker?.on('subprocessclose', resolve)
 				);
 			}
 		});
@@ -63,15 +63,15 @@ export default function(mediasoup): void
 			await expect(
 				ctx.router!.createActiveSpeakerObserver(
 					// @ts-ignore
-					{ interval: false },
-				),
+					{ interval: false }
+				)
 			).rejects.toThrow(TypeError);
 
 			await expect(
 				ctx.router!.createActiveSpeakerObserver(
 					// @ts-ignore
-					{ appData: 'NOT-AN-OBJECT' },
-				),
+					{ appData: 'NOT-AN-OBJECT' }
+				)
 			).rejects.toThrow(TypeError);
 		}, 2000);
 

@@ -1,4 +1,4 @@
-import * as FbsTransport from '../gen/fbs/transport';
+import * as FbsTransport from '@mafalda-sfu/mediasoup-node-fbs/transport';
 
 /**
  * Transport protocol.

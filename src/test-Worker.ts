@@ -25,7 +25,7 @@ export default function(mediasoup): void
 							'worker',
 							'out',
 							'Debug',
-							'mediasoup-worker',
+							'mediasoup-worker'
 						)
 					: path.join(
 							__dirname,
@@ -35,7 +35,7 @@ export default function(mediasoup): void
 							'worker',
 							'out',
 							'Release',
-							'mediasoup-worker',
+							'mediasoup-worker'
 						);
 
 			expect(mediasoup.workerBin).toBe(workerBin);
@@ -90,29 +90,29 @@ export default function(mediasoup): void
 		test('createWorker() with wrong settings rejects with TypeError', async () => {
 			// @ts-ignore
 			await expect(mediasoup.createWorker({ logLevel: 'chicken' })).rejects.toThrow(
-				TypeError,
+				TypeError
 			);
 
 			await expect(
-				mediasoup.createWorker({ rtcMinPort: 1000, rtcMaxPort: 999 }),
+				mediasoup.createWorker({ rtcMinPort: 1000, rtcMaxPort: 999 })
 			).rejects.toThrow(TypeError);
 
 			// Port is from 0 to 65535.
 			await expect(
-				mediasoup.createWorker({ rtcMinPort: 1000, rtcMaxPort: 65536 }),
+				mediasoup.createWorker({ rtcMinPort: 1000, rtcMaxPort: 65536 })
 			).rejects.toThrow(TypeError);
 
 			await expect(
-				mediasoup.createWorker({ dtlsCertificateFile: '/notfound/cert.pem' }),
+				mediasoup.createWorker({ dtlsCertificateFile: '/notfound/cert.pem' })
 			).rejects.toThrow(TypeError);
 
 			await expect(
-				mediasoup.createWorker({ dtlsPrivateKeyFile: '/notfound/priv.pem' }),
+				mediasoup.createWorker({ dtlsPrivateKeyFile: '/notfound/priv.pem' })
 			).rejects.toThrow(TypeError);
 
 			await expect(
 				// @ts-ignore
-				mediasoup.createWorker({ appData: 'NOT-AN-OBJECT' }),
+				mediasoup.createWorker({ appData: 'NOT-AN-OBJECT' })
 			).rejects.toThrow(TypeError);
 		}, 2000);
 
@@ -120,7 +120,7 @@ export default function(mediasoup): void
 			const worker = await mediasoup.createWorker();
 
 			await expect(
-				worker.updateSettings({ logLevel: 'debug', logTags: ['ice'] }),
+				worker.updateSettings({ logLevel: 'debug', logTags: ['ice'] })
 			).resolves.toBeUndefined();
 
 			worker.close();
@@ -133,7 +133,7 @@ export default function(mediasoup): void
 
 			// @ts-ignore
 			await expect(worker.updateSettings({ logLevel: 'chicken' })).rejects.toThrow(
-				TypeError,
+				TypeError
 			);
 
 			worker.close();
@@ -149,7 +149,7 @@ export default function(mediasoup): void
 			await new Promise<void>(resolve => worker.on('subprocessclose', resolve));
 
 			await expect(worker.updateSettings({ logLevel: 'error' })).rejects.toThrow(
-				InvalidStateError,
+				InvalidStateError
 			);
 		}, 2000);
 
@@ -220,9 +220,7 @@ export default function(mediasoup): void
 
 					if (onObserverClose.mock.calls.length > 0) {
 						reject(
-							new Error(
-								'observer "close" event emitted before worker "died" event',
-							),
+							new Error('observer "close" event emitted before worker "died" event')
 						);
 					} else if (worker1.closed) {
 						resolve();
@@ -256,9 +254,7 @@ export default function(mediasoup): void
 
 					if (onObserverClose.mock.calls.length > 0) {
 						reject(
-							new Error(
-								'observer "close" event emitted before worker "died" event',
-							),
+							new Error('observer "close" event emitted before worker "died" event')
 						);
 					} else if (worker2.closed) {
 						resolve();
@@ -292,9 +288,7 @@ export default function(mediasoup): void
 
 					if (onObserverClose.mock.calls.length > 0) {
 						reject(
-							new Error(
-								'observer "close" event emitted before worker "died" event',
-							),
+							new Error('observer "close" event emitted before worker "died" event')
 						);
 					} else if (worker3.closed) {
 						resolve();

@@ -10,7 +10,7 @@ export default function(mediasoup): void
 		const PKG = JSON.parse(
 			fs.readFileSync(path.join(sync(__dirname), 'package.json'), {
 				encoding: 'utf-8',
-			}),
+			})
 		);
 
 		const { version, getSupportedRtpCapabilities, parseScalabilityMode } =

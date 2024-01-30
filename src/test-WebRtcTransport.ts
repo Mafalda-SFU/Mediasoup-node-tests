@@ -6,9 +6,9 @@ import {
 	Notification,
 	Body as NotificationBody,
 	Event,
-} from '../gen/fbs/notification';
-import * as FbsTransport from '../gen/fbs/transport';
-import * as FbsWebRtcTransport from '../gen/fbs/web-rtc-transport';
+} from '@mafalda-sfu/mediasoup-node-fbs/notification';
+import * as FbsTransport from '@mafalda-sfu/mediasoup-node-fbs/transport';
+import * as FbsWebRtcTransport from '@mafalda-sfu/mediasoup-node-fbs/web-rtc-transport';
 
 export default function(mediasoup): void
 {
@@ -60,8 +60,8 @@ export default function(mediasoup): void
 			ctx.worker?.close();
 
 			if (ctx.worker?.subprocessClosed === false) {
-				await new Promise<void>(
-					resolve => ctx.worker?.on('subprocessclose', resolve),
+				await new Promise<void>(resolve =>
+					ctx.worker?.on('subprocessclose', resolve)
 				);
 			}
 		});
@@ -179,22 +179,22 @@ export default function(mediasoup): void
 		test('router.createWebRtcTransport() with wrong arguments rejects with TypeError', async () => {
 			// @ts-ignore
 			await expect(ctx.router!.createWebRtcTransport({})).rejects.toThrow(
-				TypeError,
+				TypeError
 			);
 
 			await expect(
 				// @ts-ignore
-				ctx.router!.createWebRtcTransport({ listenIps: [123] }),
+				ctx.router!.createWebRtcTransport({ listenIps: [123] })
 			).rejects.toThrow(TypeError);
 
 			await expect(
 				// @ts-ignore
-				ctx.router!.createWebRtcTransport({ listenInfos: '127.0.0.1' }),
+				ctx.router!.createWebRtcTransport({ listenInfos: '127.0.0.1' })
 			).rejects.toThrow(TypeError);
 
 			await expect(
 				// @ts-ignore
-				ctx.router!.createWebRtcTransport({ listenIps: '127.0.0.1' }),
+				ctx.router!.createWebRtcTransport({ listenIps: '127.0.0.1' })
 			).rejects.toThrow(TypeError);
 
 			await expect(
@@ -202,7 +202,7 @@ export default function(mediasoup): void
 					listenIps: ['127.0.0.1'],
 					// @ts-ignore
 					appData: 'NOT-AN-OBJECT',
-				}),
+				})
 			).rejects.toThrow(TypeError);
 
 			await expect(
@@ -211,7 +211,7 @@ export default function(mediasoup): void
 					enableSctp: true,
 					// @ts-ignore
 					numSctpStreams: 'foo',
-				}),
+				})
 			).rejects.toThrow(TypeError);
 		}, 2000);
 
@@ -219,7 +219,7 @@ export default function(mediasoup): void
 			await expect(
 				ctx.router!.createWebRtcTransport({
 					listenInfos: [{ protocol: 'udp', ip: '8.8.8.8' }],
-				}),
+				})
 			).rejects.toThrow(Error);
 		}, 2000);
 
@@ -274,12 +274,12 @@ export default function(mediasoup): void
 			};
 
 			await expect(
-				webRtcTransport.connect({ dtlsParameters: dtlsRemoteParameters }),
+				webRtcTransport.connect({ dtlsParameters: dtlsRemoteParameters })
 			).resolves.toBeUndefined();
 
 			// Must fail if connected.
 			await expect(
-				webRtcTransport.connect({ dtlsParameters: dtlsRemoteParameters }),
+				webRtcTransport.connect({ dtlsParameters: dtlsRemoteParameters })
 			).rejects.toThrow(Error);
 
 			expect(webRtcTransport.dtlsParameters.role).toBe('server');
@@ -308,7 +308,7 @@ export default function(mediasoup): void
 			};
 
 			await expect(
-				webRtcTransport.connect({ dtlsParameters: dtlsRemoteParameters }),
+				webRtcTransport.connect({ dtlsParameters: dtlsRemoteParameters })
 			).rejects.toThrow(TypeError);
 
 			dtlsRemoteParameters = {
@@ -324,7 +324,7 @@ export default function(mediasoup): void
 			};
 
 			await expect(
-				webRtcTransport.connect({ dtlsParameters: dtlsRemoteParameters }),
+				webRtcTransport.connect({ dtlsParameters: dtlsRemoteParameters })
 			).rejects.toThrow(TypeError);
 
 			dtlsRemoteParameters = {
@@ -333,11 +333,11 @@ export default function(mediasoup): void
 			};
 
 			await expect(
-				webRtcTransport.connect({ dtlsParameters: dtlsRemoteParameters }),
+				webRtcTransport.connect({ dtlsParameters: dtlsRemoteParameters })
 			).rejects.toThrow(TypeError);
 
 			await expect(
-				webRtcTransport.connect({ dtlsParameters: dtlsRemoteParameters }),
+				webRtcTransport.connect({ dtlsParameters: dtlsRemoteParameters })
 			).rejects.toThrow(TypeError);
 
 			expect(webRtcTransport.dtlsParameters.role).toBe('auto');
@@ -349,12 +349,12 @@ export default function(mediasoup): void
 			});
 
 			await expect(
-				webRtcTransport.setMaxIncomingBitrate(1000000),
+				webRtcTransport.setMaxIncomingBitrate(1000000)
 			).resolves.toBeUndefined();
 
 			// Remove limit.
 			await expect(
-				webRtcTransport.setMaxIncomingBitrate(0),
+				webRtcTransport.setMaxIncomingBitrate(0)
 			).resolves.toBeUndefined();
 		}, 2000);
 
@@ -364,12 +364,12 @@ export default function(mediasoup): void
 			});
 
 			await expect(
-				webRtcTransport.setMaxOutgoingBitrate(2000000),
+				webRtcTransport.setMaxOutgoingBitrate(2000000)
 			).resolves.toBeUndefined();
 
 			// Remove limit.
 			await expect(
-				webRtcTransport.setMaxOutgoingBitrate(0),
+				webRtcTransport.setMaxOutgoingBitrate(0)
 			).resolves.toBeUndefined();
 		}, 2000);
 
@@ -379,12 +379,12 @@ export default function(mediasoup): void
 			});
 
 			await expect(
-				webRtcTransport.setMinOutgoingBitrate(100000),
+				webRtcTransport.setMinOutgoingBitrate(100000)
 			).resolves.toBeUndefined();
 
 			// Remove limit.
 			await expect(
-				webRtcTransport.setMinOutgoingBitrate(0),
+				webRtcTransport.setMinOutgoingBitrate(0)
 			).resolves.toBeUndefined();
 		}, 2000);
 
@@ -394,16 +394,16 @@ export default function(mediasoup): void
 			});
 
 			await expect(
-				webRtcTransport.setMinOutgoingBitrate(3000000),
+				webRtcTransport.setMinOutgoingBitrate(3000000)
 			).resolves.toBeUndefined();
 
 			await expect(webRtcTransport.setMaxOutgoingBitrate(2000000)).rejects.toThrow(
-				Error,
+				Error
 			);
 
 			// Remove limit.
 			await expect(
-				webRtcTransport.setMinOutgoingBitrate(0),
+				webRtcTransport.setMinOutgoingBitrate(0)
 			).resolves.toBeUndefined();
 		}, 2000);
 
@@ -413,16 +413,16 @@ export default function(mediasoup): void
 			});
 
 			await expect(
-				webRtcTransport.setMaxOutgoingBitrate(2000000),
+				webRtcTransport.setMaxOutgoingBitrate(2000000)
 			).resolves.toBeUndefined();
 
 			await expect(webRtcTransport.setMinOutgoingBitrate(3000000)).rejects.toThrow(
-				Error,
+				Error
 			);
 
 			// Remove limit.
 			await expect(
-				webRtcTransport.setMaxOutgoingBitrate(0),
+				webRtcTransport.setMaxOutgoingBitrate(0)
 			).resolves.toBeUndefined();
 		}, 2000);
 
@@ -444,7 +444,7 @@ export default function(mediasoup): void
 			expect(typeof webRtcTransport.iceParameters.usernameFragment).toBe('string');
 			expect(typeof webRtcTransport.iceParameters.password).toBe('string');
 			expect(webRtcTransport.iceParameters.usernameFragment).not.toBe(
-				previousIceUsernameFragment,
+				previousIceUsernameFragment
 			);
 			expect(webRtcTransport.iceParameters.password).not.toBe(previousIcePassword);
 		}, 2000);
@@ -484,17 +484,17 @@ export default function(mediasoup): void
 
 			// @ts-ignore
 			await expect(webRtcTransport.enableTraceEvent(123)).rejects.toThrow(
-				TypeError,
+				TypeError
 			);
 
 			// @ts-ignore
 			await expect(webRtcTransport.enableTraceEvent('probation')).rejects.toThrow(
-				TypeError,
+				TypeError
 			);
 
 			await expect(
 				// @ts-ignore
-				webRtcTransport.enableTraceEvent(['probation', 123.123]),
+				webRtcTransport.enableTraceEvent(['probation', 123.123])
 			).rejects.toThrow(TypeError);
 		}, 2000);
 
@@ -514,7 +514,7 @@ export default function(mediasoup): void
 			const builder = new flatbuffers.Builder();
 			const iceStateChangeNotification =
 				new FbsWebRtcTransport.IceStateChangeNotificationT(
-					FbsWebRtcTransport.IceState.COMPLETED,
+					FbsWebRtcTransport.IceState.COMPLETED
 				);
 
 			let notificationOffset = Notification.createNotification(
@@ -522,19 +522,19 @@ export default function(mediasoup): void
 				builder.createString(webRtcTransport.id),
 				Event.WEBRTCTRANSPORT_ICE_STATE_CHANGE,
 				NotificationBody.WebRtcTransport_IceStateChangeNotification,
-				iceStateChangeNotification.pack(builder),
+				iceStateChangeNotification.pack(builder)
 			);
 
 			builder.finish(notificationOffset);
 
 			let notification = Notification.getRootAsNotification(
-				new flatbuffers.ByteBuffer(builder.asUint8Array()),
+				new flatbuffers.ByteBuffer(builder.asUint8Array())
 			);
 
 			channel.emit(
 				webRtcTransport.id,
 				Event.WEBRTCTRANSPORT_ICE_STATE_CHANGE,
-				notification,
+				notification
 			);
 
 			expect(onIceStateChange).toHaveBeenCalledTimes(1);
@@ -562,8 +562,8 @@ export default function(mediasoup): void
 						iceSelectedTuple.localPort,
 						iceSelectedTuple.remoteIp,
 						iceSelectedTuple.remotePort,
-						serializeProtocol(iceSelectedTuple.protocol),
-					),
+						serializeProtocol(iceSelectedTuple.protocol)
+					)
 				);
 
 			notificationOffset = Notification.createNotification(
@@ -571,19 +571,19 @@ export default function(mediasoup): void
 				builder.createString(webRtcTransport.id),
 				Event.WEBRTCTRANSPORT_ICE_SELECTED_TUPLE_CHANGE,
 				NotificationBody.WebRtcTransport_IceSelectedTupleChangeNotification,
-				iceSelectedTupleChangeNotification.pack(builder),
+				iceSelectedTupleChangeNotification.pack(builder)
 			);
 
 			builder.finish(notificationOffset);
 
 			notification = Notification.getRootAsNotification(
-				new flatbuffers.ByteBuffer(builder.asUint8Array()),
+				new flatbuffers.ByteBuffer(builder.asUint8Array())
 			);
 
 			channel.emit(
 				webRtcTransport.id,
 				Event.WEBRTCTRANSPORT_ICE_SELECTED_TUPLE_CHANGE,
-				notification,
+				notification
 			);
 
 			expect(onIceSelectedTuple).toHaveBeenCalledTimes(1);
@@ -599,7 +599,7 @@ export default function(mediasoup): void
 			// Simulate a 'dtlsstatechange' notification coming through the channel.
 			const dtlsStateChangeNotification =
 				new FbsWebRtcTransport.DtlsStateChangeNotificationT(
-					FbsWebRtcTransport.DtlsState.CONNECTING,
+					FbsWebRtcTransport.DtlsState.CONNECTING
 				);
 
 			notificationOffset = Notification.createNotification(
@@ -607,19 +607,19 @@ export default function(mediasoup): void
 				builder.createString(webRtcTransport.id),
 				Event.WEBRTCTRANSPORT_DTLS_STATE_CHANGE,
 				NotificationBody.WebRtcTransport_DtlsStateChangeNotification,
-				dtlsStateChangeNotification.pack(builder),
+				dtlsStateChangeNotification.pack(builder)
 			);
 
 			builder.finish(notificationOffset);
 
 			notification = Notification.getRootAsNotification(
-				new flatbuffers.ByteBuffer(builder.asUint8Array()),
+				new flatbuffers.ByteBuffer(builder.asUint8Array())
 			);
 
 			channel.emit(
 				webRtcTransport.id,
 				Event.WEBRTCTRANSPORT_DTLS_STATE_CHANGE,
-				notification,
+				notification
 			);
 
 			expect(onDtlsStateChange).toHaveBeenCalledTimes(1);
@@ -652,15 +652,15 @@ export default function(mediasoup): void
 			await expect(webRtcTransport.connect({})).rejects.toThrow(Error);
 
 			await expect(webRtcTransport.setMaxIncomingBitrate(200000)).rejects.toThrow(
-				Error,
+				Error
 			);
 
 			await expect(webRtcTransport.setMaxOutgoingBitrate(200000)).rejects.toThrow(
-				Error,
+				Error
 			);
 
 			await expect(webRtcTransport.setMinOutgoingBitrate(100000)).rejects.toThrow(
-				Error,
+				Error
 			);
 
 			await expect(webRtcTransport.restartIce()).rejects.toThrow(Error);

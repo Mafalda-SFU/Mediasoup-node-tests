@@ -20,8 +20,8 @@ export default function(mediasoup): void
 			ctx.worker?.close();
 
 			if (ctx.worker?.subprocessClosed === false) {
-				await new Promise<void>(
-					resolve => ctx.worker?.on('subprocessclose', resolve),
+				await new Promise<void>(resolve =>
+					ctx.worker?.on('subprocessclose', resolve)
 				);
 			}
 		});
@@ -157,17 +157,17 @@ export default function(mediasoup): void
 
 			await expect(
 				// @ts-ignore
-				ctx.worker!.createWebRtcServer({ listenInfos: 'NOT-AN-ARRAY' }),
+				ctx.worker!.createWebRtcServer({ listenInfos: 'NOT-AN-ARRAY' })
 			).rejects.toThrow(TypeError);
 
 			await expect(
 				// @ts-ignore
-				ctx.worker!.createWebRtcServer({ listenInfos: ['NOT-AN-OBJECT'] }),
+				ctx.worker!.createWebRtcServer({ listenInfos: ['NOT-AN-OBJECT'] })
 			).rejects.toThrow(Error);
 
 			// Empty listenInfos so should fail.
 			await expect(
-				ctx.worker!.createWebRtcServer({ listenInfos: [] }),
+				ctx.worker!.createWebRtcServer({ listenInfos: [] })
 			).rejects.toThrow(TypeError);
 		}, 2000);
 
@@ -199,7 +199,7 @@ export default function(mediasoup): void
 							port: port2,
 						},
 					],
-				}),
+				})
 			).rejects.toThrow(Error);
 
 			// Using the same UDP port in two listenInfos.
@@ -218,7 +218,7 @@ export default function(mediasoup): void
 							port: port1,
 						},
 					],
-				}),
+				})
 			).rejects.toThrow(Error);
 
 			await ctx.worker!.createWebRtcServer({
@@ -241,7 +241,7 @@ export default function(mediasoup): void
 							port: port1,
 						},
 					],
-				}),
+				})
 			).rejects.toThrow(Error);
 
 			worker2.close();
@@ -259,7 +259,7 @@ export default function(mediasoup): void
 			await expect(
 				ctx.worker!.createWebRtcServer({
 					listenInfos: [{ protocol: 'udp', ip: '127.0.0.1', port }],
-				}),
+				})
 			).rejects.toThrow(InvalidStateError);
 		}, 2000);
 
@@ -326,11 +326,11 @@ export default function(mediasoup): void
 
 			webRtcServer.observer.once(
 				'webrtctransporthandled',
-				onObserverWebRtcTransportHandled,
+				onObserverWebRtcTransportHandled
 			);
 			webRtcServer.observer.once(
 				'webrtctransportunhandled',
-				onObserverWebRtcTransportUnhandled,
+				onObserverWebRtcTransportUnhandled
 			);
 
 			const router = await ctx.worker!.createRouter();
@@ -425,11 +425,11 @@ export default function(mediasoup): void
 
 			webRtcServer.observer.once(
 				'webrtctransporthandled',
-				onObserverWebRtcTransportHandled,
+				onObserverWebRtcTransportHandled
 			);
 			webRtcServer.observer.once(
 				'webrtctransportunhandled',
-				onObserverWebRtcTransportUnhandled,
+				onObserverWebRtcTransportUnhandled
 			);
 
 			const router = await ctx.worker!.createRouter();

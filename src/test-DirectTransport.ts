@@ -18,8 +18,8 @@ export default function(mediasoup): void
 			ctx.worker?.close();
 
 			if (ctx.worker?.subprocessClosed === false) {
-				await new Promise<void>(
-					resolve => ctx.worker?.on('subprocessclose', resolve),
+				await new Promise<void>(resolve =>
+					ctx.worker?.on('subprocessclose', resolve)
 				);
 			}
 		});
@@ -62,11 +62,11 @@ export default function(mediasoup): void
 		test('router.createDirectTransport() with wrong arguments rejects with TypeError', async () => {
 			await expect(
 				// @ts-ignore
-				ctx.router!.createDirectTransport({ maxMessageSize: 'foo' }),
+				ctx.router!.createDirectTransport({ maxMessageSize: 'foo' })
 			).rejects.toThrow(TypeError);
 
 			await expect(
-				ctx.router!.createDirectTransport({ maxMessageSize: -2000 }),
+				ctx.router!.createDirectTransport({ maxMessageSize: -2000 })
 			).rejects.toThrow(TypeError);
 		}, 2000);
 
@@ -133,16 +133,16 @@ export default function(mediasoup): void
 				dataProducer.on('listenererror', (eventName, error) => {
 					reject(
 						new Error(
-							`dataProducer 'listenererror' [eventName:${eventName}]: ${error}`,
-						),
+							`dataProducer 'listenererror' [eventName:${eventName}]: ${error}`
+						)
 					);
 				});
 
 				dataConsumer.on('listenererror', (eventName, error) => {
 					reject(
 						new Error(
-							`dataConsumer 'listenererror' [eventName:${eventName}]: ${error}`,
-						),
+							`dataConsumer 'listenererror' [eventName:${eventName}]: ${error}`
+						)
 					);
 				});
 
@@ -201,16 +201,16 @@ export default function(mediasoup): void
 					else if (id < numMessages / 2 && ppid !== 51) {
 						reject(
 							new Error(
-								`ppid in message with id ${id} should be 51 but it is ${ppid}`,
-							),
+								`ppid in message with id ${id} should be 51 but it is ${ppid}`
+							)
 						);
 					}
 					// PPID of WebRTC DataChannel binary.
 					else if (id > numMessages / 2 && ppid !== 53) {
 						reject(
 							new Error(
-								`ppid in message with id ${id} should be 53 but it is ${ppid}`,
-							),
+								`ppid in message with id ${id} should be 53 but it is ${ppid}`
+							)
 						);
 					}
 				});
@@ -264,7 +264,7 @@ export default function(mediasoup): void
 					'both',
 					/* ppid */ undefined,
 					/* subchannels */ undefined,
-					/* requiredSubchannel */ undefined,
+					/* requiredSubchannel */ undefined
 				);
 
 				// Must be received by dataConsumer1 and dataConsumer2.
@@ -272,7 +272,7 @@ export default function(mediasoup): void
 					'both',
 					/* ppid */ undefined,
 					/* subchannels */ [1, 2],
-					/* requiredSubchannel */ undefined,
+					/* requiredSubchannel */ undefined
 				);
 
 				// Must be received by dataConsumer1 and dataConsumer2.
@@ -280,7 +280,7 @@ export default function(mediasoup): void
 					'both',
 					/* ppid */ undefined,
 					/* subchannels */ [11, 22, 33],
-					/* requiredSubchannel */ 666,
+					/* requiredSubchannel */ 666
 				);
 
 				// Must not be received by neither dataConsumer1 nor dataConsumer2.
@@ -288,7 +288,7 @@ export default function(mediasoup): void
 					'none',
 					/* ppid */ undefined,
 					/* subchannels */ [3],
-					/* requiredSubchannel */ 666,
+					/* requiredSubchannel */ 666
 				);
 
 				// Must not be received by neither dataConsumer1 nor dataConsumer2.
@@ -296,7 +296,7 @@ export default function(mediasoup): void
 					'none',
 					/* ppid */ undefined,
 					/* subchannels */ [666],
-					/* requiredSubchannel */ 3,
+					/* requiredSubchannel */ 3
 				);
 
 				// Must be received by dataConsumer1.
@@ -304,7 +304,7 @@ export default function(mediasoup): void
 					'dc1',
 					/* ppid */ undefined,
 					/* subchannels */ [1],
-					/* requiredSubchannel */ undefined,
+					/* requiredSubchannel */ undefined
 				);
 
 				// Must be received by dataConsumer1.
@@ -312,7 +312,7 @@ export default function(mediasoup): void
 					'dc1',
 					/* ppid */ undefined,
 					/* subchannels */ [11],
-					/* requiredSubchannel */ 1,
+					/* requiredSubchannel */ 1
 				);
 
 				// Must be received by dataConsumer1.
@@ -320,7 +320,7 @@ export default function(mediasoup): void
 					'dc1',
 					/* ppid */ undefined,
 					/* subchannels */ [666],
-					/* requiredSubchannel */ 11,
+					/* requiredSubchannel */ 11
 				);
 
 				// Must be received by dataConsumer2.
@@ -328,7 +328,7 @@ export default function(mediasoup): void
 					'dc2',
 					/* ppid */ undefined,
 					/* subchannels */ [666],
-					/* requiredSubchannel */ 2,
+					/* requiredSubchannel */ 2
 				);
 
 				// Make dataConsumer2 also subscribe to subchannel 1.
@@ -340,7 +340,7 @@ export default function(mediasoup): void
 					'both',
 					/* ppid */ undefined,
 					/* subchannels */ [1],
-					/* requiredSubchannel */ 666,
+					/* requiredSubchannel */ 666
 				);
 
 				dataConsumer1.on('message', message => {

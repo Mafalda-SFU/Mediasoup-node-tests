@@ -50,8 +50,8 @@ export default function(mediasoup): void
 			ctx.worker?.close();
 
 			if (ctx.worker?.subprocessClosed === false) {
-				await new Promise<void>(
-					resolve => ctx.worker?.on('subprocessclose', resolve),
+				await new Promise<void>(resolve =>
+					ctx.worker?.on('subprocessclose', resolve)
 				);
 			}
 		});
@@ -112,12 +112,12 @@ export default function(mediasoup): void
 		test('worker.createRouter() with wrong arguments rejects with TypeError', async () => {
 			// @ts-ignore
 			await expect(ctx.worker!.createRouter({ mediaCodecs: {} })).rejects.toThrow(
-				TypeError,
+				TypeError
 			);
 
 			await expect(
 				// @ts-ignore
-				ctx.worker!.createRouter({ appData: 'NOT-AN-OBJECT' }),
+				ctx.worker!.createRouter({ appData: 'NOT-AN-OBJECT' })
 			).rejects.toThrow(TypeError);
 		}, 2000);
 
@@ -125,7 +125,7 @@ export default function(mediasoup): void
 			ctx.worker!.close();
 
 			await expect(
-				ctx.worker!.createRouter({ mediaCodecs: ctx.mediaCodecs }),
+				ctx.worker!.createRouter({ mediaCodecs: ctx.mediaCodecs })
 			).rejects.toThrow(InvalidStateError);
 		}, 2000);
 

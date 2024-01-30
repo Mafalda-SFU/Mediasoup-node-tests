@@ -187,13 +187,13 @@ export default function(mediasoup): void
 				enableSctp: true,
 			});
 			ctx.audioProducer = await ctx.webRtcTransport1.produce(
-				ctx.audioProducerOptions,
+				ctx.audioProducerOptions
 			);
 			ctx.videoProducer = await ctx.webRtcTransport1.produce(
-				ctx.videoProducerOptions,
+				ctx.videoProducerOptions
 			);
 			ctx.dataProducer = await ctx.webRtcTransport1.produceData(
-				ctx.dataProducerOptions,
+				ctx.dataProducerOptions
 			);
 		});
 
@@ -202,14 +202,14 @@ export default function(mediasoup): void
 			ctx.worker2?.close();
 
 			if (ctx.worker1?.subprocessClosed === false) {
-				await new Promise<void>(
-					resolve => ctx.worker1?.on('subprocessclose', resolve),
+				await new Promise<void>(resolve =>
+					ctx.worker1?.on('subprocessclose', resolve)
 				);
 			}
 
 			if (ctx.worker2?.subprocessClosed === false) {
-				await new Promise<void>(
-					resolve => ctx.worker2?.on('subprocessclose', resolve),
+				await new Promise<void>(resolve =>
+					ctx.worker2?.on('subprocessclose', resolve)
 				);
 			}
 		});
@@ -455,18 +455,18 @@ export default function(mediasoup): void
 			await expect(ctx.router1!.createPipeTransport({})).rejects.toThrow(TypeError);
 
 			await expect(
-				ctx.router1!.createPipeTransport({ listenIp: '123' }),
+				ctx.router1!.createPipeTransport({ listenIp: '123' })
 			).rejects.toThrow(TypeError);
 
 			await expect(
 				// @ts-ignore
-				ctx.router1!.createPipeTransport({ listenIp: ['127.0.0.1'] }),
+				ctx.router1!.createPipeTransport({ listenIp: ['127.0.0.1'] })
 			).rejects.toThrow(TypeError);
 
 			await expect(
 				ctx.router1!.createPipeTransport({
 					listenInfo: { protocol: 'tcp', ip: '127.0.0.1' },
-				}),
+				})
 			).rejects.toThrow(TypeError);
 
 			await expect(
@@ -474,7 +474,7 @@ export default function(mediasoup): void
 					listenInfo: { protocol: 'udp', ip: '127.0.0.1' },
 					// @ts-ignore
 					appData: 'NOT-AN-OBJECT',
-				}),
+				})
 			).rejects.toThrow(TypeError);
 		}, 2000);
 
@@ -578,7 +578,7 @@ export default function(mediasoup): void
 						keyBase64:
 							'YTdjcDBvY2JoMGY5YXNlNDc0eDJsdGgwaWRvNnJsamRrdG16aWVpZHphdHo=',
 					},
-				}),
+				})
 			).resolves.toBeUndefined();
 		}, 2000);
 
@@ -600,7 +600,7 @@ export default function(mediasoup): void
 						keyBase64:
 							'YTdjcDBvY2JoMGY5YXNlNDc0eDJsdGgwaWRvNnJsamRrdG16aWVpZHphdHo=',
 					},
-				}),
+				})
 			).rejects.toThrow(TypeError);
 
 			// No SRTP enabled so passing srtpParameters (even if invalid) must fail.
@@ -610,7 +610,7 @@ export default function(mediasoup): void
 					port: 9999,
 					// @ts-ignore
 					srtpParameters: 'invalid',
-				}),
+				})
 			).rejects.toThrow(TypeError);
 		});
 
@@ -630,7 +630,7 @@ export default function(mediasoup): void
 				pipeTransport.connect({
 					ip: '127.0.0.2',
 					port: 9999,
-				}),
+				})
 			).rejects.toThrow(TypeError);
 
 			// Invalid srtpParameters.
@@ -640,7 +640,7 @@ export default function(mediasoup): void
 					port: 9999,
 					// @ts-ignore
 					srtpParameters: 1,
-				}),
+				})
 			).rejects.toThrow(TypeError);
 
 			// Missing srtpParameters.cryptoSuite.
@@ -653,7 +653,7 @@ export default function(mediasoup): void
 						keyBase64:
 							'YTdjcDBvY2JoMGY5YXNlNDc0eDJsdGgwaWRvNnJsamRrdG16aWVpZHphdHo=',
 					},
-				}),
+				})
 			).rejects.toThrow(TypeError);
 
 			// Missing srtpParameters.keyBase64.
@@ -665,7 +665,7 @@ export default function(mediasoup): void
 					srtpParameters: {
 						cryptoSuite: 'AEAD_AES_256_GCM',
 					},
-				}),
+				})
 			).rejects.toThrow(TypeError);
 
 			// Invalid srtpParameters.cryptoSuite.
@@ -679,7 +679,7 @@ export default function(mediasoup): void
 						keyBase64:
 							'YTdjcDBvY2JoMGY5YXNlNDc0eDJsdGgwaWRvNnJsamRrdG16aWVpZHphdHo=',
 					},
-				}),
+				})
 			).rejects.toThrow(TypeError);
 
 			// Invalid srtpParameters.cryptoSuite.
@@ -693,7 +693,7 @@ export default function(mediasoup): void
 						keyBase64:
 							'YTdjcDBvY2JoMGY5YXNlNDc0eDJsdGgwaWRvNnJsamRrdG16aWVpZHphdHo=',
 					},
-				}),
+				})
 			).rejects.toThrow(TypeError);
 
 			// Invalid srtpParameters.keyBase64.
@@ -706,7 +706,7 @@ export default function(mediasoup): void
 						// @ts-ignore
 						keyBase64: [],
 					},
-				}),
+				})
 			).rejects.toThrow(TypeError);
 		}, 2000);
 
@@ -779,7 +779,7 @@ export default function(mediasoup): void
 			expect(typeof videoConsumer.rtpParameters.encodings?.[0].ssrc).toBe('number');
 			expect(typeof videoConsumer.rtpParameters.encodings?.[0].rtx).toBe('object');
 			expect(typeof videoConsumer.rtpParameters.encodings?.[0].rtx?.ssrc).toBe(
-				'number',
+				'number'
 			);
 			expect(videoConsumer.type).toBe('simulcast');
 			expect(videoConsumer.paused).toBe(false);
@@ -811,7 +811,7 @@ export default function(mediasoup): void
 			// NOTE: Let's use a Promise since otherwise there may be race conditions
 			// between events and await lines below.
 			const promise1 = new Promise<void>(resolve =>
-				videoConsumer.once('producerresume', resolve),
+				videoConsumer.once('producerresume', resolve)
 			);
 
 			await ctx.videoProducer!.resume();
@@ -821,7 +821,7 @@ export default function(mediasoup): void
 			expect(videoConsumer.paused).toBe(false);
 
 			const promise2 = new Promise<void>(resolve =>
-				videoConsumer.once('producerpause', resolve),
+				videoConsumer.once('producerpause', resolve)
 			);
 
 			await ctx.videoProducer!.pause();
@@ -848,7 +848,7 @@ export default function(mediasoup): void
 
 			if (!videoConsumer.closed) {
 				await new Promise<void>(resolve =>
-					videoConsumer.once('producerclose', resolve),
+					videoConsumer.once('producerclose', resolve)
 				);
 			}
 
@@ -864,7 +864,7 @@ export default function(mediasoup): void
 				ctx.router1!.pipeToRouter({
 					producerId: ctx.videoProducer!.id,
 					router: router1bis,
-				}),
+				})
 			).rejects.toThrow(Error);
 		}, 2000);
 
@@ -953,7 +953,7 @@ export default function(mediasoup): void
 
 			if (!dataConsumer.closed) {
 				await new Promise<void>(resolve =>
-					dataConsumer.once('dataproducerclose', resolve),
+					dataConsumer.once('dataproducerclose', resolve)
 				);
 			}
 

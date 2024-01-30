@@ -133,7 +133,7 @@ export default function(mediasoup): void
 			];
 
 			expect(() => ortc.generateRouterRtpCapabilities(mediaCodecs)).toThrow(
-				/*Unsupported*/Error,
+				/*Unsupported*/Error
 			);
 
 			mediaCodecs = [
@@ -146,7 +146,7 @@ export default function(mediasoup): void
 			];
 
 			expect(() => ortc.generateRouterRtpCapabilities(mediaCodecs)).toThrow(
-				/*Unsupported*/Error,
+				/*Unsupported*/Error
 			);
 		});
 
@@ -163,7 +163,7 @@ export default function(mediasoup): void
 			}
 
 			expect(() => ortc.generateRouterRtpCapabilities(mediaCodecs)).toThrow(
-				'cannot allocate',
+				'cannot allocate'
 			);
 		});
 
@@ -253,7 +253,7 @@ export default function(mediasoup): void
 
 			const rtpMapping = ortc.getProducerRtpParametersMapping(
 				rtpParameters,
-				routerRtpCapabilities,
+				routerRtpCapabilities
 			);
 
 			expect(rtpMapping.codecs).toEqual([
@@ -275,7 +275,7 @@ export default function(mediasoup): void
 				'video',
 				rtpParameters,
 				routerRtpCapabilities,
-				rtpMapping,
+				rtpMapping
 			);
 
 			expect(consumableRtpParameters.codecs[0].mimeType).toBe('video/H264');
@@ -488,19 +488,19 @@ export default function(mediasoup): void
 			expect(typeof pipeConsumerRtpParameters.encodings?.[0].ssrc).toBe('number');
 			expect(pipeConsumerRtpParameters.encodings?.[0].rtx).toBeUndefined();
 			expect(typeof pipeConsumerRtpParameters.encodings?.[0].maxBitrate).toBe(
-				'number',
+				'number'
 			);
 			expect(pipeConsumerRtpParameters.encodings?.[0].scalabilityMode).toBe('L1T3');
 			expect(typeof pipeConsumerRtpParameters.encodings?.[1].ssrc).toBe('number');
 			expect(pipeConsumerRtpParameters.encodings?.[1].rtx).toBeUndefined();
 			expect(typeof pipeConsumerRtpParameters.encodings?.[1].maxBitrate).toBe(
-				'number',
+				'number'
 			);
 			expect(pipeConsumerRtpParameters.encodings?.[1].scalabilityMode).toBe('L1T3');
 			expect(typeof pipeConsumerRtpParameters.encodings?.[2].ssrc).toBe('number');
 			expect(pipeConsumerRtpParameters.encodings?.[2].rtx).toBeUndefined();
 			expect(typeof pipeConsumerRtpParameters.encodings?.[2].maxBitrate).toBe(
-				'number',
+				'number'
 			);
 			expect(pipeConsumerRtpParameters.encodings?.[2].scalabilityMode).toBe('L1T3');
 
@@ -551,7 +551,7 @@ export default function(mediasoup): void
 			};
 
 			expect(() =>
-				ortc.getProducerRtpParametersMapping(rtpParameters, routerRtpCapabilities),
+				ortc.getProducerRtpParametersMapping(rtpParameters, routerRtpCapabilities)
 			).toThrow(/*Unsupported*/Error);
 		});
 	});
