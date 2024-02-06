@@ -76,7 +76,11 @@ export default function(mediasoup): void
 
 			// Create a separate transport here.
 			const plainTransport2 = await ctx.router!.createPlainTransport({
-				listenInfo: { protocol: 'udp', ip: '127.0.0.1', announcedIp: '9.9.9.1' },
+				listenInfo: {
+					protocol: 'udp',
+					ip: '127.0.0.1',
+					announcedAddress: '9.9.9.1',
+				},
 				enableSctp: true,
 				appData: { foo: 'bar' },
 			});
@@ -87,7 +91,9 @@ export default function(mediasoup): void
 			expect(plainTransport2.closed).toBe(false);
 			expect(plainTransport2.appData).toEqual({ foo: 'bar' });
 			expect(typeof plainTransport2.tuple).toBe('object');
+			// @deprecated Use tuple.localAddress instead.
 			expect(plainTransport2.tuple.localIp).toBe('9.9.9.1');
+			expect(plainTransport2.tuple.localAddress).toBe('9.9.9.1');
 			expect(typeof plainTransport2.tuple.localPort).toBe('number');
 			expect(plainTransport2.tuple.protocol).toBe('udp');
 			expect(plainTransport2.rtcpTuple).toBeUndefined();
@@ -141,11 +147,15 @@ export default function(mediasoup): void
 			expect(transport2.closed).toBe(false);
 			expect(transport2.appData).toEqual({});
 			expect(typeof transport2.tuple).toBe('object');
+			// @deprecated Use tuple.localAddress instead.
 			expect(transport2.tuple.localIp).toBe('127.0.0.1');
+			expect(transport2.tuple.localAddress).toBe('127.0.0.1');
 			expect(transport2.tuple.localPort).toBe(rtpPort);
 			expect(transport2.tuple.protocol).toBe('udp');
 			expect(typeof transport2.rtcpTuple).toBe('object');
+			// @deprecated Use tuple.localAddress instead.
 			expect(transport2.rtcpTuple?.localIp).toBe('127.0.0.1');
+			expect(transport2.rtcpTuple?.localAddress).toBe('127.0.0.1');
 			expect(transport2.rtcpTuple?.localPort).toBe(rtcpPort);
 			expect(transport2.rtcpTuple?.protocol).toBe('udp');
 			expect(transport2.sctpParameters).toBeUndefined();
@@ -398,7 +408,9 @@ export default function(mediasoup): void
 			expect(stats[0].probationBytesSent).toBe(0);
 			expect(stats[0].probationSendBitrate).toBe(0);
 			expect(typeof stats[0].tuple).toBe('object');
+			// @deprecated Use tuple.localAddress instead.
 			expect(stats[0].tuple.localIp).toBe('127.0.0.1');
+			expect(stats[0].tuple.localAddress).toBe('127.0.0.1');
 			expect(typeof stats[0].tuple.localPort).toBe('number');
 			expect(stats[0].tuple.protocol).toBe('udp');
 			expect(stats[0].rtcpTuple).toBeUndefined();

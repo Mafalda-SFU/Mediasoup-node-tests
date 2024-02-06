@@ -71,15 +71,14 @@ export default function(mediasoup): void
 
 			ctx.router!.observer.once('newtransport', onObserverNewTransport);
 
-			// Create a separate transport here.
 			const webRtcTransport = await ctx.router!.createWebRtcTransport({
 				listenInfos: [
-					{ protocol: 'udp', ip: '127.0.0.1', announcedIp: '9.9.9.1' },
-					{ protocol: 'tcp', ip: '127.0.0.1', announcedIp: '9.9.9.1' },
-					{ protocol: 'udp', ip: '0.0.0.0', announcedIp: '9.9.9.2' },
-					{ protocol: 'tcp', ip: '0.0.0.0', announcedIp: '9.9.9.2' },
-					{ protocol: 'udp', ip: '127.0.0.1', announcedIp: undefined },
-					{ protocol: 'tcp', ip: '127.0.0.1', announcedIp: undefined },
+					{ protocol: 'udp', ip: '127.0.0.1', announcedAddress: '9.9.9.1' },
+					{ protocol: 'tcp', ip: '127.0.0.1', announcedAddress: '9.9.9.1' },
+					{ protocol: 'udp', ip: '0.0.0.0', announcedAddress: 'foo1.bar.org' },
+					{ protocol: 'tcp', ip: '0.0.0.0', announcedAddress: 'foo2.bar.org' },
+					{ protocol: 'udp', ip: '127.0.0.1', announcedAddress: undefined },
+					{ protocol: 'tcp', ip: '127.0.0.1', announcedAddress: undefined },
 				],
 				enableTcp: true,
 				preferUdp: true,
@@ -122,11 +121,11 @@ export default function(mediasoup): void
 			expect(iceCandidates[1].protocol).toBe('tcp');
 			expect(iceCandidates[1].type).toBe('host');
 			expect(iceCandidates[1].tcpType).toBe('passive');
-			expect(iceCandidates[2].ip).toBe('9.9.9.2');
+			expect(iceCandidates[2].ip).toBe('foo1.bar.org');
 			expect(iceCandidates[2].protocol).toBe('udp');
 			expect(iceCandidates[2].type).toBe('host');
 			expect(iceCandidates[2].tcpType).toBeUndefined();
-			expect(iceCandidates[3].ip).toBe('9.9.9.2');
+			expect(iceCandidates[3].ip).toBe('foo2.bar.org');
 			expect(iceCandidates[3].protocol).toBe('tcp');
 			expect(iceCandidates[3].type).toBe('host');
 			expect(iceCandidates[3].tcpType).toBe('passive');
@@ -225,7 +224,9 @@ export default function(mediasoup): void
 
 		test('webRtcTransport.getStats() succeeds', async () => {
 			const webRtcTransport = await ctx.router!.createWebRtcTransport({
-				listenInfos: [{ protocol: 'udp', ip: '127.0.0.1', announcedIp: '9.9.9.1' }],
+				listenInfos: [
+					{ protocol: 'udp', ip: '127.0.0.1', announcedAddress: '9.9.9.1' },
+				],
 			});
 
 			const stats = await webRtcTransport.getStats();
@@ -259,7 +260,9 @@ export default function(mediasoup): void
 
 		test('webRtcTransport.connect() succeeds', async () => {
 			const webRtcTransport = await ctx.router!.createWebRtcTransport({
-				listenInfos: [{ protocol: 'udp', ip: '127.0.0.1', announcedIp: '9.9.9.1' }],
+				listenInfos: [
+					{ protocol: 'udp', ip: '127.0.0.1', announcedAddress: '9.9.9.1' },
+				],
 			});
 
 			const dtlsRemoteParameters: mediasoup.types.DtlsParameters = {
@@ -287,7 +290,9 @@ export default function(mediasoup): void
 
 		test('webRtcTransport.connect() with wrong arguments rejects with TypeError', async () => {
 			const webRtcTransport = await ctx.router!.createWebRtcTransport({
-				listenInfos: [{ protocol: 'udp', ip: '127.0.0.1', announcedIp: '9.9.9.1' }],
+				listenInfos: [
+					{ protocol: 'udp', ip: '127.0.0.1', announcedAddress: '9.9.9.1' },
+				],
 			});
 
 			let dtlsRemoteParameters: mediasoup.types.DtlsParameters;
@@ -345,7 +350,9 @@ export default function(mediasoup): void
 
 		test('webRtcTransport.setMaxIncomingBitrate() succeeds', async () => {
 			const webRtcTransport = await ctx.router!.createWebRtcTransport({
-				listenInfos: [{ protocol: 'udp', ip: '127.0.0.1', announcedIp: '9.9.9.1' }],
+				listenInfos: [
+					{ protocol: 'udp', ip: '127.0.0.1', announcedAddress: '9.9.9.1' },
+				],
 			});
 
 			await expect(
@@ -545,7 +552,9 @@ export default function(mediasoup): void
 
 			const onIceSelectedTuple = jest.fn();
 			const iceSelectedTuple: TransportTuple = {
+				// @deprecated Use localAddress.
 				localIp: '1.1.1.1',
+				localAddress: '1.1.1.1',
 				localPort: 1111,
 				remoteIp: '2.2.2.2',
 				remotePort: 2222,
@@ -558,7 +567,7 @@ export default function(mediasoup): void
 			const iceSelectedTupleChangeNotification =
 				new FbsWebRtcTransport.IceSelectedTupleChangeNotificationT(
 					new FbsTransport.TupleT(
-						iceSelectedTuple.localIp,
+						iceSelectedTuple.localAddress,
 						iceSelectedTuple.localPort,
 						iceSelectedTuple.remoteIp,
 						iceSelectedTuple.remotePort,

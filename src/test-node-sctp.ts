@@ -42,7 +42,7 @@ export default function(mediasoup): void
 				ctx.udpSocket!.bind(0, '127.0.0.1', resolve);
 			});
 
-			const remoteUdpIp = ctx.plainTransport.tuple.localIp;
+			const remoteUdpIp = ctx.plainTransport.tuple.localAddress;
 			const remoteUdpPort = ctx.plainTransport.tuple.localPort;
 			const { OS, MIS } = ctx.plainTransport.sctpParameters!;
 

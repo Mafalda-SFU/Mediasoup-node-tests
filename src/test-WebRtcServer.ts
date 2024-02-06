@@ -52,7 +52,7 @@ export default function(mediasoup): void
 					{
 						protocol: 'tcp',
 						ip: '127.0.0.1',
-						announcedIp: '1.2.3.4',
+						announcedAddress: 'foo.bar.org',
 						port: port2,
 					},
 				],
@@ -109,7 +109,7 @@ export default function(mediasoup): void
 					{
 						protocol: 'tcp',
 						ip: '127.0.0.1',
-						announcedIp: '1.2.3.4',
+						announcedAddress: '1.2.3.4',
 					},
 				],
 				appData: { foo: 123 },
@@ -214,7 +214,7 @@ export default function(mediasoup): void
 						{
 							protocol: 'udp',
 							ip: '127.0.0.1',
-							announcedIp: '1.2.3.4',
+							announcedAddress: '1.2.3.4',
 							port: port1,
 						},
 					],
