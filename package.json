@@ -24,7 +24,7 @@
   "author": "Jesús Leganés-Combarro 'piranna' (https://piranna.github.io)",
   "license": "ISC",
   "dependencies": {
-    "@mafalda-sfu/mediasoup-node-fbs": "^3.13.18",
+    "@mafalda-sfu/mediasoup-node-fbs": "^3.13.19-0",
     "@mafalda-sfu/mediasoup-ortc": "^3.13.18",
     "flatbuffers": "^23.5.26",
     "pick-port": "^2.0.1",
