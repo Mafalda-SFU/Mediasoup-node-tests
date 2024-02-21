@@ -302,12 +302,16 @@ export default function(mediasoup): void
 			};
 
 			await expect(
-				webRtcTransport.connect({ dtlsParameters: dtlsRemoteParameters })
+				webRtcTransport.connect({
+					dtlsParameters: dtlsRemoteParameters,
+				})
 			).resolves.toBeUndefined();
 
 			// Must fail if connected.
 			await expect(
-				webRtcTransport.connect({ dtlsParameters: dtlsRemoteParameters })
+				webRtcTransport.connect({
+					dtlsParameters: dtlsRemoteParameters,
+				})
 			).rejects.toThrow(Error);
 
 			expect(webRtcTransport.dtlsParameters.role).toBe('server');

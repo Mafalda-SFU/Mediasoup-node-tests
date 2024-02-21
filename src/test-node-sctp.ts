@@ -125,8 +125,7 @@ export default function(mediasoup): void
 			// It must be zero because it's the first DataConsumer on the plainTransport.
 			expect(ctx.dataConsumer!.sctpStreamParameters?.streamId).toBe(0);
 
-			// eslint-disable-next-line no-async-promise-executor
-			await new Promise<void>(async (resolve, reject) => {
+			await new Promise<void>((resolve, reject) => {
 				sendNextMessage();
 
 				async function sendNextMessage(): Promise<void> {

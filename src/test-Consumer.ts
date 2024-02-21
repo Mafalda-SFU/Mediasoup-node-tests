@@ -1,3 +1,4 @@
+import { once } from 'node:events';
 import * as flatbuffers from 'flatbuffers';
 import * as utils from './utils';
 import {
@@ -997,26 +998,24 @@ export default function(mediasoup): void
 				rtpCapabilities: ctx.consumerDeviceCapabilities,
 			});
 
-			// eslint-disable-next-line no-async-promise-executor
-			await new Promise<void>(async resolve => {
-				audioConsumer.on('producerpause', resolve);
+			await Promise.all([
+				once(audioConsumer, 'producerpause'),
 
 				// Let's await for pause() to resolve to avoid aborted channel requests
 				// due to worker closure.
-				await ctx.audioProducer!.pause();
-			});
+				ctx.audioProducer!.pause(),
+			]);
 
 			expect(audioConsumer.paused).toBe(false);
 			expect(audioConsumer.producerPaused).toBe(true);
 
-			// eslint-disable-next-line no-async-promise-executor
-			await new Promise<void>(async resolve => {
-				audioConsumer.on('producerresume', resolve);
+			await Promise.all([
+				once(audioConsumer, 'producerresume'),
 
 				// Let's await for resume() to resolve to avoid aborted channel requests
 				// due to worker closure.
-				await ctx.audioProducer!.resume();
-			});
+				ctx.audioProducer!.resume(),
+			]);
 
 			expect(audioConsumer.paused).toBe(false);
 			expect(audioConsumer.producerPaused).toBe(false);
