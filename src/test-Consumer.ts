@@ -127,10 +127,10 @@ export default function(mediasoup): void
 						},
 					],
 					encodings: [
-						{ ssrc: 22222222, rtx: { ssrc: 22222223 } },
-						{ ssrc: 22222224, rtx: { ssrc: 22222225 } },
-						{ ssrc: 22222226, rtx: { ssrc: 22222227 } },
-						{ ssrc: 22222228, rtx: { ssrc: 22222229 } },
+						{ ssrc: 22222222, scalabilityMode: 'L1T5', rtx: { ssrc: 22222223 } },
+						{ ssrc: 22222224, scalabilityMode: 'L1T5', rtx: { ssrc: 22222225 } },
+						{ ssrc: 22222226, scalabilityMode: 'L1T5', rtx: { ssrc: 22222227 } },
+						{ ssrc: 22222228, scalabilityMode: 'L1T5', rtx: { ssrc: 22222229 } },
 					],
 					rtcp: {
 						cname: 'FOOBAR',
@@ -347,7 +347,7 @@ export default function(mediasoup): void
 				producerId: ctx.videoProducer!.id,
 				rtpCapabilities: ctx.consumerDeviceCapabilities,
 				paused: true,
-				preferredLayers: { spatialLayer: 12 },
+				preferredLayers: { spatialLayer: 12, temporalLayer: 0 },
 				appData: { baz: 'LOL' },
 			});
 
@@ -733,7 +733,7 @@ export default function(mediasoup): void
 					rtx: {
 						ssrc: videoConsumer.rtpParameters.encodings?.[0].rtx?.ssrc,
 					},
-					scalabilityMode: 'L4T1',
+					scalabilityMode: 'L4T5',
 				},
 			]);
 			expect(Array.isArray(dump2.consumableRtpEncodings)).toBe(true);
@@ -741,21 +741,25 @@ export default function(mediasoup): void
 			expect(dump2.consumableRtpEncodings![0]).toEqual(
 				expect.objectContaining({
 					ssrc: ctx.videoProducer!.consumableRtpParameters.encodings?.[0].ssrc,
+					scalabilityMode: 'L1T5',
 				})
 			);
 			expect(dump2.consumableRtpEncodings![1]).toEqual(
 				expect.objectContaining({
 					ssrc: ctx.videoProducer!.consumableRtpParameters.encodings?.[1].ssrc,
+					scalabilityMode: 'L1T5',
 				})
 			);
 			expect(dump2.consumableRtpEncodings![2]).toEqual(
 				expect.objectContaining({
 					ssrc: ctx.videoProducer!.consumableRtpParameters.encodings?.[2].ssrc,
+					scalabilityMode: 'L1T5',
 				})
 			);
 			expect(dump2.consumableRtpEncodings![3]).toEqual(
 				expect.objectContaining({
 					ssrc: ctx.videoProducer!.consumableRtpParameters.encodings?.[3].ssrc,
+					scalabilityMode: 'L1T5',
 				})
 			);
 			expect(dump2.supportedCodecPayloadTypes).toEqual([103]);
@@ -874,7 +878,31 @@ export default function(mediasoup): void
 
 			expect(videoConsumer.preferredLayers).toEqual({
 				spatialLayer: 2,
+				temporalLayer: 3,
+			});
+
+			await videoConsumer.setPreferredLayers({ spatialLayer: 3 });
+
+			expect(videoConsumer.preferredLayers).toEqual({
+				spatialLayer: 3,
+				temporalLayer: 4,
+			});
+
+			await videoConsumer.setPreferredLayers({ spatialLayer: 3, temporalLayer: 0 });
+
+			expect(videoConsumer.preferredLayers).toEqual({
+				spatialLayer: 3,
 				temporalLayer: 0,
+			});
+
+			await videoConsumer.setPreferredLayers({
+				spatialLayer: 66,
+				temporalLayer: 66,
+			});
+
+			expect(videoConsumer.preferredLayers).toEqual({
+				spatialLayer: 3,
+				temporalLayer: 4,
 			});
 		}, 2000);
 
