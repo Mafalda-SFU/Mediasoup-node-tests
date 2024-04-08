@@ -21,7 +21,7 @@ export default function(mediasoup): void
 		};
 
 		const ctx: TestContext = {
-			mediaCodecs: utils.deepFreeze([
+			mediaCodecs: utils.deepFreeze<mediasoup.types.RtpCodecCapability[]>([
 				{
 					kind: 'audio',
 					mimeType: 'audio/opus',
@@ -198,6 +198,57 @@ export default function(mediasoup): void
 			expect(iceCandidates[1].type).toBe('host');
 			expect(iceCandidates[1].tcpType).toBe('passive');
 			expect(iceCandidates[0].priority).toBeGreaterThan(iceCandidates[1].priority);
+		}, 2000);
+
+		test('router.createWebRtcTransport() with fixed port succeeds', async () => {
+			const port = await pickPort({
+				type: 'tcp',
+				ip: '127.0.0.1',
+				reserveTimeout: 0,
+			});
+			const webRtcTransport = await ctx.router!.createWebRtcTransport({
+				listenInfos: [
+					// NOTE: udpReusePort flag will be ignored since protocol is TCP.
+					{ protocol: 'tcp', ip: '127.0.0.1', port, flags: { udpReusePort: true } },
+				],
+			});
+
+			expect(webRtcTransport.iceCandidates[0].port).toEqual(port);
+		}, 2000);
+
+		test('router.createWebRtcTransport() with portRange succeeds', async () => {
+			const portRange = { min: 11111, max: 11112 };
+
+			const webRtcTransport1 = await ctx.router!.createWebRtcTransport({
+				listenInfos: [{ protocol: 'udp', ip: '127.0.0.1', portRange }],
+			});
+
+			const iceCandidate1 = webRtcTransport1.iceCandidates[0];
+
+			expect(iceCandidate1.ip).toBe('127.0.0.1');
+			expect(
+				iceCandidate1.port >= portRange.min && iceCandidate1.port <= portRange.max
+			).toBe(true);
+			expect(iceCandidate1.protocol).toBe('udp');
+
+			const webRtcTransport2 = await ctx.router!.createWebRtcTransport({
+				listenInfos: [{ protocol: 'udp', ip: '127.0.0.1', portRange }],
+			});
+
+			const iceCandidate2 = webRtcTransport2.iceCandidates[0];
+
+			expect(iceCandidate2.ip).toBe('127.0.0.1');
+			expect(
+				iceCandidate1.port >= portRange.min && iceCandidate1.port <= portRange.max
+			).toBe(true);
+			expect(iceCandidate2.protocol).toBe('udp');
+
+			// No more available ports so it must fail.
+			await expect(
+				ctx.router!.createWebRtcTransport({
+					listenInfos: [{ protocol: 'udp', ip: '127.0.0.1', portRange }],
+				})
+			).rejects.toThrow(Error);
 		}, 2000);
 
 		test('router.createWebRtcTransport() with wrong arguments rejects with TypeError', async () => {
@@ -702,24 +753,6 @@ export default function(mediasoup): void
 			);
 
 			await expect(webRtcTransport.restartIce()).rejects.toThrow(Error);
-		}, 2000);
-
-		test('router.createWebRtcTransport() with fixed port succeeds', async () => {
-			const port = await pickPort({
-				type: 'tcp',
-				ip: '127.0.0.1',
-				reserveTimeout: 0,
-			});
-			const webRtcTransport = await ctx.router!.createWebRtcTransport({
-				listenInfos: [
-					// NOTE: udpReusePort flag will be ignored since protocol is TCP.
-					{ protocol: 'tcp', ip: '127.0.0.1', port, flags: { udpReusePort: true } },
-				],
-			});
-
-			expect(webRtcTransport.iceCandidates[0].port).toEqual(port);
-
-			webRtcTransport.close();
 		}, 2000);
 
 		test('WebRtcTransport emits "routerclose" if Router is closed', async () => {

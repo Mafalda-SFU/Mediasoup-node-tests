@@ -15,7 +15,7 @@ export default function(mediasoup): void
 		};
 
 		const ctx: TestContext = {
-			dataProducerOptions: utils.deepFreeze({
+			dataProducerOptions: utils.deepFreeze<mediasoup.types.DataProducerOptions>({
 				sctpStreamParameters: {
 					streamId: 12345,
 					ordered: false,

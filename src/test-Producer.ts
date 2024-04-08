@@ -24,7 +24,7 @@ export default function(mediasoup): void
 		};
 
 		const ctx: TestContext = {
-			mediaCodecs: utils.deepFreeze([
+			mediaCodecs: utils.deepFreeze<mediasoup.types.RtpCodecCapability[]>([
 				{
 					kind: 'audio',
 					mimeType: 'audio/opus',
@@ -52,7 +52,7 @@ export default function(mediasoup): void
 					rtcpFeedback: [], // Will be ignored.
 				},
 			]),
-			audioProducerOptions: utils.deepFreeze({
+			audioProducerOptions: utils.deepFreeze<mediasoup.types.ProducerOptions>({
 				kind: 'audio',
 				rtpParameters: {
 					mid: 'AUDIO',
@@ -87,7 +87,7 @@ export default function(mediasoup): void
 				},
 				appData: { foo: 1, bar: '2' },
 			}),
-			videoProducerOptions: utils.deepFreeze({
+			videoProducerOptions: utils.deepFreeze<mediasoup.types.ProducerOptions>({
 				kind: 'video',
 				rtpParameters: {
 					mid: 'VIDEO',
