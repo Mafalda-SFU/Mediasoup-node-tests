@@ -457,6 +457,16 @@ export default function(mediasoup): void
 			await expect(ctx.router1!.createPipeTransport({})).rejects.toThrow(TypeError);
 
 			await expect(
+				ctx.router1!.createPipeTransport({
+					listenInfo: {
+						protocol: 'udp',
+						ip: '127.0.0.1',
+						portRange: { min: 4000, max: 3000 },
+					},
+				})
+			).rejects.toThrow(TypeError);
+
+			await expect(
 				ctx.router1!.createPipeTransport({ listenIp: '123' })
 			).rejects.toThrow(TypeError);
 
@@ -482,7 +492,11 @@ export default function(mediasoup): void
 
 		test('router.createPipeTransport() with enableRtx succeeds', async () => {
 			const pipeTransport = await ctx.router1!.createPipeTransport({
-				listenInfo: { protocol: 'udp', ip: '127.0.0.1' },
+				listenInfo: {
+					protocol: 'udp',
+					ip: '127.0.0.1',
+					portRange: { min: 2000, max: 3000 },
+				},
 				enableRtx: true,
 			});
 
@@ -586,7 +600,11 @@ export default function(mediasoup): void
 
 		test('pipeTransport.connect() with srtpParameters fails if enableSrtp is unset', async () => {
 			const pipeTransport = await ctx.router1!.createPipeTransport({
-				listenInfo: { protocol: 'udp', ip: '127.0.0.1' },
+				listenInfo: {
+					protocol: 'udp',
+					ip: '127.0.0.1',
+					portRange: { min: 2000, max: 3000 },
+				},
 				enableRtx: true,
 			});
 
