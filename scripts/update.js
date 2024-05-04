@@ -73,6 +73,11 @@ function filterOrtcUnsuportedError(line)
 
 
 const {argv: [,, version]} = process;
+if(!version?.length)
+{
+  console.error('Usage: update.js <version>')
+  process.exit(1)
+}
 
 
 (async function()
