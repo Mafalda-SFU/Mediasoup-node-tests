@@ -1,5 +1,9 @@
+import { enhancedOnce } from './enhancedEvents';
+
 export default function(mediasoup): void
 {
+	const { WorkerEvents, DirectTransportEvents } = mediasoup.types;
+
 	describe('DirectTransport', () =>
 	{
 		type TestContext = {
@@ -18,9 +22,7 @@ export default function(mediasoup): void
 			ctx.worker?.close();
 
 			if (ctx.worker?.subprocessClosed === false) {
-				await new Promise<void>(resolve =>
-					ctx.worker?.on('subprocessclose', resolve)
-				);
+				await enhancedOnce<WorkerEvents>(ctx.worker, 'subprocessclose');
 			}
 		});
 
@@ -399,11 +401,13 @@ export default function(mediasoup): void
 
 			directTransport.observer.once('close', onObserverClose);
 
-			await new Promise<void>(resolve => {
-				directTransport.on('routerclose', resolve);
+			const promise = enhancedOnce<DirectTransportEvents>(
+				directTransport,
+				'routerclose'
+			);
 
-				ctx.router!.close();
-			});
+			ctx.router!.close();
+			await promise;
 
 			expect(onObserverClose).toHaveBeenCalledTimes(1);
 			expect(directTransport.closed).toBe(true);
@@ -415,11 +419,13 @@ export default function(mediasoup): void
 
 			directTransport.observer.once('close', onObserverClose);
 
-			await new Promise<void>(resolve => {
-				directTransport.on('routerclose', resolve);
+			const promise = enhancedOnce<DirectTransportEvents>(
+				directTransport,
+				'routerclose'
+			);
 
-				ctx.worker!.close();
-			});
+			ctx.worker!.close();
+			await promise;
 
 			expect(onObserverClose).toHaveBeenCalledTimes(1);
 			expect(directTransport.closed).toBe(true);

@@ -1,7 +1,9 @@
 import { pickPort } from 'pick-port';
+import { enhancedOnce } from './enhancedEvents';
 
 export default function(mediasoup): void
 {
+	const { WorkerEvents, WebRtcServerEvents } = mediasoup.types;
 	const { InvalidStateError } = mediasoup.types;
 
 	describe('WebRtcServer', () =>
@@ -20,9 +22,7 @@ export default function(mediasoup): void
 			ctx.worker?.close();
 
 			if (ctx.worker?.subprocessClosed === false) {
-				await new Promise<void>(resolve =>
-					ctx.worker?.on('subprocessclose', resolve)
-				);
+				await enhancedOnce<WorkerEvents>(ctx.worker, 'subprocessclose');
 			}
 		});
 
@@ -363,10 +363,10 @@ export default function(mediasoup): void
 
 			webRtcServer.observer.once('close', onObserverClose);
 
-			await new Promise<void>(resolve => {
-				webRtcServer.on('workerclose', resolve);
-				ctx.worker!.close();
-			});
+			const promise = enhancedOnce<WebRtcServerEvents>(webRtcServer, 'workerclose');
+
+			ctx.worker!.close();
+			await promise;
 
 			expect(onObserverClose).toHaveBeenCalledTimes(1);
 			expect(webRtcServer.closed).toBe(true);

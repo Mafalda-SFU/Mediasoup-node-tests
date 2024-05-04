@@ -1,7 +1,9 @@
+import { enhancedOnce } from './enhancedEvents';
 import * as utils from './utils';
 
 export default function(mediasoup): void
 {
+	const { WorkerEvents } = mediasoup.types;
 	const { UnsupportedError } = mediasoup.types;
 
 	describe('multiopus', () =>
@@ -113,9 +115,7 @@ export default function(mediasoup): void
 			ctx.worker?.close();
 
 			if (ctx.worker?.subprocessClosed === false) {
-				await new Promise<void>(resolve =>
-					ctx.worker?.on('subprocessclose', resolve)
-				);
+				await enhancedOnce<WorkerEvents>(ctx.worker, 'subprocessclose');
 			}
 		});
 

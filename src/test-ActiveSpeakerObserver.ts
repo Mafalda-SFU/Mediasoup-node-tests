@@ -1,7 +1,10 @@
+import { enhancedOnce } from './enhancedEvents';
 import * as utils from './utils';
 
 export default function(mediasoup): void
 {
+	const { WorkerEvents, ActiveSpeakerObserverEvents } = mediasoup.types;
+
 	describe('ActiveSpeakerObserver', () =>
 	{
 		type TestContext = {
@@ -34,9 +37,7 @@ export default function(mediasoup): void
 			ctx.worker?.close();
 
 			if (ctx.worker?.subprocessClosed === false) {
-				await new Promise<void>(resolve =>
-					ctx.worker?.on('subprocessclose', resolve)
-				);
+				await enhancedOnce<WorkerEvents>(ctx.worker, 'subprocessclose');
 			}
 		});
 
@@ -108,10 +109,13 @@ export default function(mediasoup): void
 		test('ActiveSpeakerObserver emits "routerclose" if Router is closed', async () => {
 			const activeSpeakerObserver = await ctx.router!.createAudioLevelObserver();
 
-			await new Promise<void>(resolve => {
-				activeSpeakerObserver.on('routerclose', resolve);
-				ctx.router!.close();
-			});
+			const promise = enhancedOnce<ActiveSpeakerObserverEvents>(
+				activeSpeakerObserver,
+				'routerclose'
+			);
+
+			ctx.router!.close();
+			await promise;
 
 			expect(activeSpeakerObserver.closed).toBe(true);
 		}, 2000);
@@ -119,10 +123,13 @@ export default function(mediasoup): void
 		test('ActiveSpeakerObserver emits "routerclose" if Worker is closed', async () => {
 			const activeSpeakerObserver = await ctx.router!.createAudioLevelObserver();
 
-			await new Promise<void>(resolve => {
-				activeSpeakerObserver.on('routerclose', resolve);
-				ctx.worker!.close();
-			});
+			const promise = enhancedOnce<ActiveSpeakerObserverEvents>(
+				activeSpeakerObserver,
+				'routerclose'
+			);
+
+			ctx.worker!.close();
+			await promise;
 
 			expect(activeSpeakerObserver.closed).toBe(true);
 		}, 2000);

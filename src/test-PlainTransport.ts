@@ -1,9 +1,12 @@
 import * as os from 'node:os';
 import { pickPort } from 'pick-port';
+import { enhancedOnce } from './enhancedEvents';
 import * as utils from './utils';
 
 export default function(mediasoup): void
 {
+	const { WorkerEvents, PlainTransportEvents } = mediasoup.types;
+
 	describe('PlainTransport', () =>
 	{
 		const IS_WINDOWS = os.platform() === 'win32';
@@ -55,9 +58,7 @@ export default function(mediasoup): void
 			ctx.worker?.close();
 
 			if (ctx.worker?.subprocessClosed === false) {
-				await new Promise<void>(resolve =>
-					ctx.worker?.on('subprocessclose', resolve)
-				);
+				await enhancedOnce<WorkerEvents>(ctx.worker, 'subprocessclose');
 			}
 		});
 
@@ -542,11 +543,13 @@ export default function(mediasoup): void
 
 			plainTransport.observer.once('close', onObserverClose);
 
-			await new Promise<void>(resolve => {
-				plainTransport.on('routerclose', resolve);
+			const promise = enhancedOnce<PlainTransportEvents>(
+				plainTransport,
+				'routerclose'
+			);
 
-				ctx.router!.close();
-			});
+			ctx.router!.close();
+			await promise;
 
 			expect(onObserverClose).toHaveBeenCalledTimes(1);
 			expect(plainTransport.closed).toBe(true);
@@ -561,11 +564,13 @@ export default function(mediasoup): void
 
 			plainTransport.observer.once('close', onObserverClose);
 
-			await new Promise<void>(resolve => {
-				plainTransport.on('routerclose', resolve);
+			const promise = enhancedOnce<PlainTransportEvents>(
+				plainTransport,
+				'routerclose'
+			);
 
-				ctx.worker!.close();
-			});
+			ctx.worker!.close();
+			await promise;
 
 			expect(onObserverClose).toHaveBeenCalledTimes(1);
 			expect(plainTransport.closed).toBe(true);

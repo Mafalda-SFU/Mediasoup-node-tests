@@ -1,8 +1,11 @@
 import { pickPort } from 'pick-port';
+import { enhancedOnce } from './enhancedEvents';
 import * as utils from './utils';
 
 export default function(mediasoup): void
 {
+	const { WorkerEvents, ConsumerEvents, DataConsumerEvents } = mediasoup.types;
+
 	describe('PipeTransport', () =>
 	{
 		type TestContext = {
@@ -204,15 +207,11 @@ export default function(mediasoup): void
 			ctx.worker2?.close();
 
 			if (ctx.worker1?.subprocessClosed === false) {
-				await new Promise<void>(resolve =>
-					ctx.worker1?.on('subprocessclose', resolve)
-				);
+				await enhancedOnce<WorkerEvents>(ctx.worker1, 'subprocessclose');
 			}
 
 			if (ctx.worker2?.subprocessClosed === false) {
-				await new Promise<void>(resolve =>
-					ctx.worker2?.on('subprocessclose', resolve)
-				);
+				await enhancedOnce<WorkerEvents>(ctx.worker2, 'subprocessclose');
 			}
 		});
 
@@ -830,8 +829,9 @@ export default function(mediasoup): void
 
 			// NOTE: Let's use a Promise since otherwise there may be race conditions
 			// between events and await lines below.
-			const promise1 = new Promise<void>(resolve =>
-				videoConsumer.once('producerresume', resolve)
+			const promise1 = enhancedOnce<ConsumerEvents>(
+				videoConsumer,
+				'producerresume'
 			);
 
 			await ctx.videoProducer!.resume();
@@ -840,9 +840,7 @@ export default function(mediasoup): void
 			expect(videoConsumer.producerPaused).toBe(false);
 			expect(videoConsumer.paused).toBe(false);
 
-			const promise2 = new Promise<void>(resolve =>
-				videoConsumer.once('producerpause', resolve)
-			);
+			const promise2 = enhancedOnce<ConsumerEvents>(videoConsumer, 'producerpause');
 
 			await ctx.videoProducer!.pause();
 			await promise2;
@@ -867,9 +865,7 @@ export default function(mediasoup): void
 			expect(ctx.videoProducer!.closed).toBe(true);
 
 			if (!videoConsumer.closed) {
-				await new Promise<void>(resolve =>
-					videoConsumer.once('producerclose', resolve)
-				);
+				await enhancedOnce<ConsumerEvents>(videoConsumer, 'producerclose');
 			}
 
 			expect(videoConsumer.closed).toBe(true);
@@ -972,9 +968,7 @@ export default function(mediasoup): void
 			expect(ctx.dataProducer!.closed).toBe(true);
 
 			if (!dataConsumer.closed) {
-				await new Promise<void>(resolve =>
-					dataConsumer.once('dataproducerclose', resolve)
-				);
+				await enhancedOnce<DataConsumerEvents>(dataConsumer, 'dataproducerclose');
 			}
 
 			expect(dataConsumer.closed).toBe(true);

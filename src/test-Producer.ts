@@ -1,4 +1,5 @@
 import * as flatbuffers from 'flatbuffers';
+import { enhancedOnce } from './enhancedEvents';
 import * as utils from './utils';
 import {
 	Notification,
@@ -9,6 +10,7 @@ import * as FbsProducer from '@mafalda-sfu/mediasoup-node-fbs/producer';
 
 export default function(mediasoup): void
 {
+	const { WorkerEvents, ProducerEvents } = mediasoup.types;
 	const { UnsupportedError } = mediasoup.types;
 
 	describe('Producer', () =>
@@ -152,9 +154,7 @@ export default function(mediasoup): void
 			ctx.worker?.close();
 
 			if (ctx.worker?.subprocessClosed === false) {
-				await new Promise<void>(resolve =>
-					ctx.worker?.on('subprocessclose', resolve)
-				);
+				await enhancedOnce<WorkerEvents>(ctx.worker, 'subprocessclose');
 			}
 		});
 
@@ -827,10 +827,10 @@ export default function(mediasoup): void
 
 			videoProducer.observer.once('close', onObserverClose);
 
-			await new Promise<void>(resolve => {
-				videoProducer.on('transportclose', resolve);
-				ctx.webRtcTransport2!.close();
-			});
+			const promise = enhancedOnce<ProducerEvents>(videoProducer, 'transportclose');
+
+			ctx.webRtcTransport2!.close();
+			await promise;
 
 			expect(onObserverClose).toHaveBeenCalledTimes(1);
 			expect(videoProducer.closed).toBe(true);

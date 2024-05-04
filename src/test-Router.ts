@@ -1,7 +1,9 @@
+import { enhancedOnce } from './enhancedEvents';
 import * as utils from './utils';
 
 export default function(mediasoup): void
 {
+	const { WorkerEvents, RouterEvents } = mediasoup.types;
 	const { InvalidStateError } = mediasoup.types;
 
 	describe('Router', () =>
@@ -50,9 +52,7 @@ export default function(mediasoup): void
 			ctx.worker?.close();
 
 			if (ctx.worker?.subprocessClosed === false) {
-				await new Promise<void>(resolve =>
-					ctx.worker?.on('subprocessclose', resolve)
-				);
+				await enhancedOnce<WorkerEvents>(ctx.worker, 'subprocessclose');
 			}
 		});
 
@@ -152,11 +152,10 @@ export default function(mediasoup): void
 
 			router.observer.once('close', onObserverClose);
 
-			await new Promise<void>(resolve => {
-				router.on('workerclose', resolve);
+			const promise = enhancedOnce<RouterEvents>(router, 'workerclose');
 
-				ctx.worker!.close();
-			});
+			ctx.worker!.close();
+			await promise;
 
 			expect(onObserverClose).toHaveBeenCalledTimes(1);
 			expect(router.closed).toBe(true);

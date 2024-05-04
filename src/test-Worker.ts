@@ -1,6 +1,7 @@
 import * as os from 'node:os';
 import * as process from 'node:process';
 import * as path from 'node:path';
+import { enhancedOnce } from './enhancedEvents';
 
 const skipIfHasVirtualPids =
   process.env.HAS_VIRTUAL_PIDS
@@ -9,6 +10,7 @@ const skipIfHasVirtualPids =
 
 export default function(mediasoup): void
 {
+	const { WorkerEvents } = mediasoup.types;
 	const { InvalidStateError } = mediasoup.types;
 
 	describe('Worker', () =>
@@ -57,7 +59,7 @@ export default function(mediasoup): void
 
 			worker1.close();
 
-			await new Promise<void>(resolve => worker1.on('subprocessclose', resolve));
+			await enhancedOnce<WorkerEvents>(worker1, 'subprocessclose');
 
 			expect(worker1.closed).toBe(true);
 			expect(worker1.died).toBe(false);
@@ -81,7 +83,7 @@ export default function(mediasoup): void
 
 			worker2.close();
 
-			await new Promise<void>(resolve => worker2.on('subprocessclose', resolve));
+			await enhancedOnce<WorkerEvents>(worker2, 'subprocessclose');
 
 			expect(worker2.closed).toBe(true);
 			expect(worker2.died).toBe(false);
@@ -125,7 +127,7 @@ export default function(mediasoup): void
 
 			worker.close();
 
-			await new Promise<void>(resolve => worker.on('subprocessclose', resolve));
+			await enhancedOnce<WorkerEvents>(worker, 'subprocessclose');
 		}, 2000);
 
 		test('worker.updateSettings() with wrong settings rejects with TypeError', async () => {
@@ -138,7 +140,7 @@ export default function(mediasoup): void
 
 			worker.close();
 
-			await new Promise<void>(resolve => worker.on('subprocessclose', resolve));
+			await enhancedOnce<WorkerEvents>(worker, 'subprocessclose');
 		}, 2000);
 
 		test('worker.updateSettings() rejects with InvalidStateError if closed', async () => {
@@ -146,7 +148,7 @@ export default function(mediasoup): void
 
 			worker.close();
 
-			await new Promise<void>(resolve => worker.on('subprocessclose', resolve));
+			await enhancedOnce<WorkerEvents>(worker, 'subprocessclose');
 
 			await expect(worker.updateSettings({ logLevel: 'error' })).rejects.toThrow(
 				InvalidStateError
@@ -174,7 +176,7 @@ export default function(mediasoup): void
 
 			worker.close();
 
-			await new Promise<void>(resolve => worker.on('subprocessclose', resolve));
+			await enhancedOnce<WorkerEvents>(worker, 'subprocessclose');
 
 			await expect(worker.dump()).rejects.toThrow(InvalidStateError);
 		}, 2000);
@@ -186,7 +188,7 @@ export default function(mediasoup): void
 
 			worker.close();
 
-			await new Promise<void>(resolve => worker.on('subprocessclose', resolve));
+			await enhancedOnce<WorkerEvents>(worker, 'subprocessclose');
 		}, 2000);
 
 		test('worker.close() succeeds', async () => {
@@ -196,7 +198,7 @@ export default function(mediasoup): void
 			worker.observer.once('close', onObserverClose);
 			worker.close();
 
-			await new Promise<void>(resolve => worker.on('subprocessclose', resolve));
+			await enhancedOnce<WorkerEvents>(worker, 'subprocessclose');
 
 			expect(onObserverClose).toHaveBeenCalledTimes(1);
 			expect(worker.closed).toBe(true);
@@ -233,7 +235,7 @@ export default function(mediasoup): void
 			});
 
 			if (!worker1.subprocessClosed) {
-				await new Promise<void>(resolve => worker1.on('subprocessclose', resolve));
+				await enhancedOnce<WorkerEvents>(worker1, 'subprocessclose');
 			}
 
 			expect(onDied).toHaveBeenCalledTimes(1);
@@ -267,7 +269,7 @@ export default function(mediasoup): void
 			});
 
 			if (!worker2.subprocessClosed) {
-				await new Promise<void>(resolve => worker2.on('subprocessclose', resolve));
+				await enhancedOnce<WorkerEvents>(worker2, 'subprocessclose');
 			}
 
 			expect(onDied).toHaveBeenCalledTimes(1);
@@ -301,7 +303,7 @@ export default function(mediasoup): void
 			});
 
 			if (!worker3.subprocessClosed) {
-				await new Promise<void>(resolve => worker3.on('subprocessclose', resolve));
+				await enhancedOnce<WorkerEvents>(worker3, 'subprocessclose');
 			}
 
 			expect(onDied).toHaveBeenCalledTimes(1);

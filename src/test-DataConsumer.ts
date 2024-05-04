@@ -1,7 +1,10 @@
+import { enhancedOnce } from './enhancedEvents';
 import * as utils from './utils';
 
 export default function(mediasoup): void
 {
+	const { WorkerEvents, DataConsumerEvents } = mediasoup.types;
+
 	describe('DataConsumer', () =>
 	{
 		type TestContext = {
@@ -47,9 +50,7 @@ export default function(mediasoup): void
 			ctx.worker?.close();
 
 			if (ctx.worker?.subprocessClosed === false) {
-				await new Promise<void>(resolve =>
-					ctx.worker?.on('subprocessclose', resolve)
-				);
+				await enhancedOnce<WorkerEvents>(ctx.worker, 'subprocessclose');
 			}
 		});
 
@@ -377,11 +378,13 @@ export default function(mediasoup): void
 
 			dataConsumer.observer.once('close', onObserverClose);
 
-			await new Promise<void>(resolve => {
-				dataConsumer.on('dataproducerclose', resolve);
+			const promise = enhancedOnce<DataConsumerEvents>(
+				dataConsumer,
+				'dataproducerclose'
+			);
 
-				ctx.dataProducer!.close();
-			});
+			ctx.dataProducer!.close();
+			await promise;
 
 			expect(onObserverClose).toHaveBeenCalledTimes(1);
 			expect(dataConsumer.closed).toBe(true);
@@ -395,11 +398,13 @@ export default function(mediasoup): void
 
 			dataConsumer.observer.once('close', onObserverClose);
 
-			await new Promise<void>(resolve => {
-				dataConsumer.on('transportclose', resolve);
+			const promise = enhancedOnce<DataConsumerEvents>(
+				dataConsumer,
+				'transportclose'
+			);
 
-				ctx.webRtcTransport2!.close();
-			});
+			ctx.webRtcTransport2!.close();
+			await promise;
 
 			expect(onObserverClose).toHaveBeenCalledTimes(1);
 			expect(dataConsumer.closed).toBe(true);

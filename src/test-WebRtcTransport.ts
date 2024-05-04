@@ -1,5 +1,6 @@
 import { pickPort } from 'pick-port';
 import * as flatbuffers from 'flatbuffers';
+import { enhancedOnce } from './enhancedEvents';
 import * as utils from './utils';
 import { serializeProtocol, TransportTuple } from './Transport';
 import {
@@ -12,6 +13,8 @@ import * as FbsWebRtcTransport from '@mafalda-sfu/mediasoup-node-fbs/web-rtc-tra
 
 export default function(mediasoup): void
 {
+	const { WorkerEvents, WebRtcTransportEvents } = mediasoup.types;
+
 	describe('WebRtcTransport', () =>
 	{
 		type TestContext = {
@@ -60,9 +63,7 @@ export default function(mediasoup): void
 			ctx.worker?.close();
 
 			if (ctx.worker?.subprocessClosed === false) {
-				await new Promise<void>(resolve =>
-					ctx.worker?.on('subprocessclose', resolve)
-				);
+				await enhancedOnce<WorkerEvents>(ctx.worker, 'subprocessclose');
 			}
 		});
 
@@ -847,11 +848,13 @@ export default function(mediasoup): void
 
 			webRtcTransport.observer.once('close', onObserverClose);
 
-			await new Promise<void>(resolve => {
-				webRtcTransport.on('routerclose', resolve);
+			const promise = enhancedOnce<WebRtcTransportEvents>(
+				webRtcTransport,
+				'routerclose'
+			);
 
-				ctx.router!.close();
-			});
+			ctx.router!.close();
+			await promise;
 
 			expect(onObserverClose).toHaveBeenCalledTimes(1);
 			expect(webRtcTransport.closed).toBe(true);
@@ -872,11 +875,13 @@ export default function(mediasoup): void
 
 			webRtcTransport.observer.once('close', onObserverClose);
 
-			await new Promise<void>(resolve => {
-				webRtcTransport.on('routerclose', resolve);
+			const promise = enhancedOnce<WebRtcTransportEvents>(
+				webRtcTransport,
+				'routerclose'
+			);
 
-				ctx.worker!.close();
-			});
+			ctx.worker!.close();
+			await promise;
 
 			expect(onObserverClose).toHaveBeenCalledTimes(1);
 			expect(webRtcTransport.closed).toBe(true);
