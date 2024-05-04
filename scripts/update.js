@@ -42,6 +42,21 @@ export function serializeProtocol(protocol: TransportProtocol): FbsTransport.Pro
     }
   }
 }`
+const enhancedEventsTs = `import { EventEmitter, once } from 'node:events';
+
+type Events = Record<string, any[]>;
+
+/**
+ * TypeScript version of events.once():
+ *   https://nodejs.org/api/events.html#eventsonceemitter-name-options
+ */
+export async function enhancedOnce<E extends Events = Events>(
+  emmiter: EventEmitter<E>,
+  eventName: keyof E & string,
+  options?: any
+): Promise<any[]> {
+  return once(emmiter, eventName, options);
+}`
 const utilsTs = `/**
  * Make an object or array recursively immutable.
  * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze.
@@ -87,6 +102,7 @@ if(!version?.length)
     rm('src', options)
     .then(mkdir.bind(null, 'src', options))
     .then(writeFile.bind(null, 'src/Transport.ts', TransportTs, 'utf8'))
+    .then(writeFile.bind(null, 'src/enhancedEvents.ts', enhancedEventsTs, 'utf8'))
     .then(writeFile.bind(null, 'src/utils.ts', utilsTs, 'utf8'))
   ])
 
@@ -179,6 +195,16 @@ if(!version?.length)
                     continue
                   }
 
+                  if(line.includes('../types'))
+                  {
+                    imports.push(
+                      line
+                        .replace('import', 'const')
+                        .replace("from '../types'", '= mediasoup.types')
+                    )
+                    continue
+                  }
+
                   if(line.includes('../fbs'))
                     line = line.replace(
                       '../fbs', '@mafalda-sfu/mediasoup-node-fbs'
@@ -191,6 +217,9 @@ if(!version?.length)
 
                   else if(line.includes('../Transport'))
                     line = line.replace('../Transport', './Transport')
+
+                  else if(line.includes('../enhancedEvents'))
+                    line = line.replace('../enhancedEvents', './enhancedEvents')
 
                   else if(line.includes('../utils'))
                     line = line.replace('../utils', './utils')
