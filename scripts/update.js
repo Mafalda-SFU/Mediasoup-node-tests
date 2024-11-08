@@ -153,6 +153,7 @@ if(!version?.length)
               content = []
 
               let describeName
+              let importStatement
               let imports = []
               let indent = ''
               let insideImport = false
@@ -166,15 +167,17 @@ if(!version?.length)
                 }
 
                 if(line.startsWith('import'))
+                {
+                  importStatement = ''
                   insideImport = true
+                }
 
                 if(insideImport)
                 {
-                  if(!line.includes('from'))
-                  {
-                    content.push(line)
-                    continue
-                  }
+                  if(importStatement) importStatement += '\n'
+                  importStatement += line
+
+                  if(!line.includes('from')) continue
 
                   insideImport = false
 
@@ -188,8 +191,9 @@ if(!version?.length)
                   if(line.includes('../errors'))
                   {
                     imports.push(
-                      line
+                      importStatement
                         .replace('import', 'const')
+                        .replaceAll('\n', '\n\t')
                         .replace("from '../errors'", '= mediasoup.types')
                     )
                     continue
@@ -198,31 +202,36 @@ if(!version?.length)
                   if(line.includes('../types'))
                   {
                     imports.push(
-                      line
+                      importStatement
                         .replace('import', 'const')
+                        .replaceAll('\n', '\n\t')
                         .replace("from '../types'", '= mediasoup.types')
                     )
                     continue
                   }
 
                   if(line.includes('../fbs'))
-                    line = line.replace(
+                    line = importStatement.replace(
                       '../fbs', '@mafalda-sfu/mediasoup-node-fbs'
                     )
 
                   else if(line.includes('../ortc'))
-                    line = line.replace(
+                    line = importStatement.replace(
                       '../ortc', '@mafalda-sfu/mediasoup-ortc'
                     )
 
                   else if(line.includes('../Transport'))
-                    line = line.replace('../Transport', './Transport')
+                    line = importStatement.replace(
+                      '../Transport', './Transport'
+                    )
 
                   else if(line.includes('../enhancedEvents'))
-                    line = line.replace('../enhancedEvents', './enhancedEvents')
+                    line = importStatement.replace(
+                      '../enhancedEvents', './enhancedEvents'
+                    )
 
                   else if(line.includes('../utils'))
-                    line = line.replace('../utils', './utils')
+                    line = importStatement.replace('../utils', './utils')
                 }
 
                 else if(!indent)
