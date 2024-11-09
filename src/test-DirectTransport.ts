@@ -63,7 +63,7 @@ export default function(mediasoup): void
 
 		test('router.createDirectTransport() with wrong arguments rejects with TypeError', async () => {
 			await expect(
-				// @ts-ignore
+				// @ts-expect-error --- Testing purposes.
 				ctx.router!.createDirectTransport({ maxMessageSize: 'foo' })
 			).rejects.toThrow(TypeError);
 
@@ -172,7 +172,7 @@ export default function(mediasoup): void
 				dataProducer.on('listenererror', (eventName, error) => {
 					reject(
 						new Error(
-							`dataProducer 'listenererror' [eventName:${eventName}]: ${error}`
+							`dataProducer 'listenererror' [eventName:${eventName}]: ${error.toString()}`
 						)
 					);
 				});
@@ -180,7 +180,7 @@ export default function(mediasoup): void
 				dataConsumer.on('listenererror', (eventName, error) => {
 					reject(
 						new Error(
-							`dataConsumer 'listenererror' [eventName:${eventName}]: ${error}`
+							`dataConsumer 'listenererror' [eventName:${eventName}]: ${error.toString()}`
 						)
 					);
 				});

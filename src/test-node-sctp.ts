@@ -1,5 +1,5 @@
 import * as dgram from 'node:dgram';
-// @ts-ignore
+// @ts-expect-error -- sctp library doesn't have TS types.
 import * as sctp from 'sctp';
 import { enhancedOnce } from './enhancedEvents';
 
@@ -27,7 +27,7 @@ export default function(mediasoup): void
 			// Set node-sctp default PMTU to 1200.
 			sctp.defaults({ PMTU: 1200 });
 
-			ctx.worker = await mediasoup.createWorker();
+			ctx.worker = await mediasoup.createWorker({ disableLiburing: true });
 			ctx.router = await ctx.worker.createRouter();
 			ctx.plainTransport = await ctx.router.createPlainTransport({
 				// https://github.com/nodejs/node/issues/14900.
@@ -50,14 +50,11 @@ export default function(mediasoup): void
 			const { OS, MIS } = ctx.plainTransport.sctpParameters!;
 
 			await new Promise<void>((resolve, reject) => {
-				// @ts-ignore
-				ctx.udpSocket.connect(remoteUdpPort, remoteUdpIp, (error: Error) => {
-					if (error) {
-						reject(error);
+				ctx.udpSocket?.on('error', error => {
+					reject(error);
+				});
 
-						return;
-					}
-
+				ctx.udpSocket?.connect(remoteUdpPort, remoteUdpIp, () => {
 					ctx.sctpSocket = sctp.connect({
 						localPort: 5000, // Required for SCTP over UDP in mediasoup.
 						port: 5000, // Required for SCTP over UDP in mediasoup.
@@ -129,18 +126,18 @@ export default function(mediasoup): void
 			await new Promise<void>((resolve, reject) => {
 				sendNextMessage();
 
-				async function sendNextMessage(): Promise<void> {
+				function sendNextMessage(): void {
 					const id = ++numSentMessages;
 					const data = Buffer.from(String(id));
 
 					// Set ppid of type WebRTC DataChannel string.
 					if (id < numMessages / 2) {
-						// @ts-ignore
+						// @ts-expect-errors --- sctp library needs `ppid` field.`
 						data.ppid = sctp.PPID.WEBRTC_STRING;
 					}
 					// Set ppid of type WebRTC DataChannel binary.
 					else {
-						// @ts-ignore
+						// @ts-expect-errors --- sctp library needs `ppid` field.
 						data.ppid = sctp.PPID.WEBRTC_BINARY;
 					}
 
@@ -155,7 +152,7 @@ export default function(mediasoup): void
 				ctx.sctpSocket!.on('stream', onStream);
 
 				// Handle the generated SCTP incoming stream and SCTP messages receives on it.
-				// @ts-ignore
+				// @ts-expect-error --- Custom event of sctp library.
 				ctx.sctpSocket.on('stream', (stream, streamId) => {
 					// It must be zero because it's the first SCTP incoming stream (so first
 					// DataConsumer).
@@ -165,13 +162,12 @@ export default function(mediasoup): void
 						return;
 					}
 
-					// @ts-ignore
 					stream.on('data', (data: Buffer) => {
 						++numReceivedMessages;
 						recvMessageBytes += data.byteLength;
 
 						const id = Number(data.toString('utf8'));
-						// @ts-ignore
+						// @ts-expect-errors --- sctp library uses `ppid` field.
 						const ppid = data.ppid;
 
 						if (id !== numReceivedMessages) {

@@ -177,7 +177,7 @@ export default function(mediasoup): void
 		}, 2000);
 
 		test('router.createPlainTransport() with wrong arguments rejects with TypeError', async () => {
-			// @ts-ignore
+			// @ts-expect-error --- Testing purposes.
 			await expect(ctx.router!.createPlainTransport({})).rejects.toThrow(TypeError);
 
 			await expect(
@@ -195,7 +195,7 @@ export default function(mediasoup): void
 			).rejects.toThrow(TypeError);
 
 			await expect(
-				// @ts-ignore
+				// @ts-expect-error --- Testing purposes.
 				ctx.router!.createPlainTransport({ listenIp: ['127.0.0.1'] })
 			).rejects.toThrow(TypeError);
 
@@ -208,7 +208,7 @@ export default function(mediasoup): void
 			await expect(
 				ctx.router!.createPlainTransport({
 					listenInfo: { protocol: 'udp', ip: '127.0.0.1' },
-					// @ts-ignore
+					// @ts-expect-error --- Testing purposes.
 					appData: 'NOT-AN-OBJECT',
 				})
 			).rejects.toThrow(TypeError);
@@ -241,7 +241,7 @@ export default function(mediasoup): void
 				plainTransport.connect({
 					ip: '127.0.0.2',
 					port: 9999,
-					// @ts-ignore
+					// @ts-expect-error --- Testing purposes.
 					srtpParameters: 1,
 				})
 			).rejects.toThrow(TypeError);
@@ -251,7 +251,7 @@ export default function(mediasoup): void
 				plainTransport.connect({
 					ip: '127.0.0.2',
 					port: 9999,
-					// @ts-ignore
+					// @ts-expect-error --- Testing purposes.
 					srtpParameters: {
 						keyBase64: 'ZnQ3eWJraDg0d3ZoYzM5cXN1Y2pnaHU5NWxrZTVv',
 					},
@@ -263,7 +263,7 @@ export default function(mediasoup): void
 				plainTransport.connect({
 					ip: '127.0.0.2',
 					port: 9999,
-					// @ts-ignore
+					// @ts-expect-error --- Testing purposes.
 					srtpParameters: {
 						cryptoSuite: 'AES_CM_128_HMAC_SHA1_80',
 					},
@@ -276,7 +276,7 @@ export default function(mediasoup): void
 					ip: '127.0.0.2',
 					port: 9999,
 					srtpParameters: {
-						// @ts-ignore
+						// @ts-expect-error --- Testing purposes.
 						cryptoSuite: 'FOO',
 						keyBase64: 'ZnQ3eWJraDg0d3ZoYzM5cXN1Y2pnaHU5NWxrZTVv',
 					},
@@ -289,7 +289,7 @@ export default function(mediasoup): void
 					ip: '127.0.0.2',
 					port: 9999,
 					srtpParameters: {
-						// @ts-ignore
+						// @ts-expect-error --- Testing purposes.
 						cryptoSuite: 123,
 						keyBase64: 'ZnQ3eWJraDg0d3ZoYzM5cXN1Y2pnaHU5NWxrZTVv',
 					},
@@ -303,7 +303,7 @@ export default function(mediasoup): void
 					port: 9999,
 					srtpParameters: {
 						cryptoSuite: 'AES_CM_128_HMAC_SHA1_80',
-						// @ts-ignore
+						// @ts-expect-error --- Testing purposes.
 						keyBase64: [],
 					},
 				})
@@ -486,7 +486,7 @@ export default function(mediasoup): void
 				plainTransport.connect({
 					ip: '127.0.0.1',
 					port: 1234,
-					// @ts-ignore
+					// @ts-expect-error --- Testing purposes.
 					__rtcpPort: 1235,
 				})
 			).rejects.toThrow(TypeError);
@@ -494,7 +494,7 @@ export default function(mediasoup): void
 			await expect(
 				plainTransport.connect({
 					ip: '127.0.0.1',
-					// @ts-ignore
+					// @ts-expect-error --- Testing purposes.
 					__port: 'chicken',
 					rtcpPort: 1235,
 				})

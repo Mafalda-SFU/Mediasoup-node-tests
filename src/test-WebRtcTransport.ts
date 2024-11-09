@@ -283,7 +283,7 @@ export default function(mediasoup): void
 		}, 2000);
 
 		test('router.createWebRtcTransport() with wrong arguments rejects with TypeError', async () => {
-			// @ts-ignore
+			// @ts-expect-error --- Testing purposes.
 			await expect(ctx.router!.createWebRtcTransport({})).rejects.toThrow(
 				TypeError
 			);
@@ -301,24 +301,24 @@ export default function(mediasoup): void
 			).rejects.toThrow(TypeError);
 
 			await expect(
-				// @ts-ignore
+				// @ts-expect-error --- Testing purposes.
 				ctx.router!.createWebRtcTransport({ listenIps: [123] })
 			).rejects.toThrow(TypeError);
 
 			await expect(
-				// @ts-ignore
+				// @ts-expect-error --- Testing purposes.
 				ctx.router!.createWebRtcTransport({ listenInfos: '127.0.0.1' })
 			).rejects.toThrow(TypeError);
 
 			await expect(
-				// @ts-ignore
+				// @ts-expect-error --- Testing purposes.
 				ctx.router!.createWebRtcTransport({ listenIps: '127.0.0.1' })
 			).rejects.toThrow(TypeError);
 
 			await expect(
 				ctx.router!.createWebRtcTransport({
 					listenIps: ['127.0.0.1'],
-					// @ts-ignore
+					// @ts-expect-error --- Testing purposes.
 					appData: 'NOT-AN-OBJECT',
 				})
 			).rejects.toThrow(TypeError);
@@ -327,7 +327,7 @@ export default function(mediasoup): void
 				ctx.router!.createWebRtcTransport({
 					listenIps: ['127.0.0.1'],
 					enableSctp: true,
-					// @ts-ignore
+					// @ts-expect-error --- Testing purposes.
 					numSctpStreams: 'foo',
 				})
 			).rejects.toThrow(TypeError);
@@ -437,13 +437,13 @@ export default function(mediasoup): void
 
 			let dtlsRemoteParameters: mediasoup.types.DtlsParameters;
 
-			// @ts-ignore
+			// @ts-expect-error --- Testing purposes.
 			await expect(webRtcTransport.connect({})).rejects.toThrow(TypeError);
 
 			dtlsRemoteParameters = {
 				fingerprints: [
 					{
-						// @ts-ignore.
+						// @ts-expect-error --- Testing purposes..
 						algorithm: 'sha-256000',
 						value:
 							'82:5A:68:3D:36:C3:0A:DE:AF:E7:32:43:D2:88:83:57:AC:2D:65:E5:80:C4:B6:FB:AF:1A:A0:21:9F:6D:0C:AD',
@@ -464,7 +464,7 @@ export default function(mediasoup): void
 							'82:5A:68:3D:36:C3:0A:DE:AF:E7:32:43:D2:88:83:57:AC:2D:65:E5:80:C4:B6:FB:AF:1A:A0:21:9F:6D:0C:AD',
 					},
 				],
-				// @ts-ignore
+				// @ts-expect-error --- Testing purposes.
 				role: 'chicken',
 			};
 
@@ -618,7 +618,7 @@ export default function(mediasoup): void
 				],
 			});
 
-			// @ts-ignore
+			// @ts-expect-error --- Testing purposes.
 			await webRtcTransport.enableTraceEvent(['foo', 'probation']);
 			await expect(webRtcTransport.dump()).resolves.toMatchObject({
 				traceEventTypes: ['probation'],
@@ -629,7 +629,7 @@ export default function(mediasoup): void
 				traceEventTypes: [],
 			});
 
-			// @ts-ignore
+			// @ts-expect-error --- Testing purposes.
 			await webRtcTransport.enableTraceEvent(['probation', 'FOO', 'bwe', 'BAR']);
 			await expect(webRtcTransport.dump()).resolves.toMatchObject({
 				traceEventTypes: ['probation', 'bwe'],
@@ -648,18 +648,18 @@ export default function(mediasoup): void
 				],
 			});
 
-			// @ts-ignore
+			// @ts-expect-error --- Testing purposes.
 			await expect(webRtcTransport.enableTraceEvent(123)).rejects.toThrow(
 				TypeError
 			);
 
-			// @ts-ignore
+			// @ts-expect-error --- Testing purposes.
 			await expect(webRtcTransport.enableTraceEvent('probation')).rejects.toThrow(
 				TypeError
 			);
 
 			await expect(
-				// @ts-ignore
+				// @ts-expect-error --- Testing purposes.
 				webRtcTransport.enableTraceEvent(['probation', 123.123])
 			).rejects.toThrow(TypeError);
 		}, 2000);
@@ -820,7 +820,7 @@ export default function(mediasoup): void
 
 			await expect(webRtcTransport.getStats()).rejects.toThrow(Error);
 
-			// @ts-ignore
+			// @ts-expect-error --- Testing purposes.
 			await expect(webRtcTransport.connect({})).rejects.toThrow(Error);
 
 			await expect(webRtcTransport.setMaxIncomingBitrate(200000)).rejects.toThrow(

@@ -199,13 +199,13 @@ export default function(mediasoup): void
 						},
 						{
 							kind: 'audio',
-							uri: 'http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time', // eslint-disable-line max-len
+							uri: 'http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time',
 							preferredId: 4,
 							preferredEncrypt: false,
 						},
 						{
 							kind: 'video',
-							uri: 'http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time', // eslint-disable-line max-len
+							uri: 'http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time',
 							preferredId: 4,
 							preferredEncrypt: false,
 						},
@@ -458,7 +458,7 @@ export default function(mediasoup): void
 			});
 			expect(videoPipeConsumer.preferredLayers).toBeUndefined();
 			expect(videoPipeConsumer.currentLayers).toBeUndefined();
-			expect(videoPipeConsumer.appData).toBeUndefined;
+			expect(videoPipeConsumer.appData).toEqual({});
 
 			const dump2 = await ctx.router!.dump();
 
@@ -822,11 +822,11 @@ export default function(mediasoup): void
 
 			// Even if we don't await for pause()/resume() completion, the observer must
 			// fire 'pause' and 'resume' events if state was the opposite.
-			audioConsumer.pause();
-			audioConsumer.resume();
-			audioConsumer.pause();
-			audioConsumer.pause();
-			audioConsumer.pause();
+			void audioConsumer.pause();
+			void audioConsumer.resume();
+			void audioConsumer.pause();
+			void audioConsumer.pause();
+			void audioConsumer.pause();
 			await audioConsumer.resume();
 
 			expect(onObserverPause).toHaveBeenCalledTimes(3);
@@ -913,22 +913,22 @@ export default function(mediasoup): void
 				rtpCapabilities: ctx.consumerDeviceCapabilities,
 			});
 
-			// @ts-ignore
+			// @ts-expect-error --- Testing purposes.
 			await expect(videoConsumer.setPreferredLayers({})).rejects.toThrow(TypeError);
 
 			await expect(
-				// @ts-ignore
+				// @ts-expect-error --- Testing purposes.
 				videoConsumer.setPreferredLayers({ foo: '123' })
 			).rejects.toThrow(TypeError);
 
-			// @ts-ignore
+			// @ts-expect-error --- Testing purposes.
 			await expect(videoConsumer.setPreferredLayers('foo')).rejects.toThrow(
 				TypeError
 			);
 
 			// Missing spatialLayer.
 			await expect(
-				// @ts-ignore
+				// @ts-expect-error --- Testing purposes.
 				videoConsumer.setPreferredLayers({ temporalLayer: 2 })
 			).rejects.toThrow(TypeError);
 		}, 2000);
@@ -949,12 +949,12 @@ export default function(mediasoup): void
 				rtpCapabilities: ctx.consumerDeviceCapabilities,
 			});
 
-			// @ts-ignore
+			// @ts-expect-error --- Testing purposes.
 			await expect(videoConsumer.setPriority()).rejects.toThrow(TypeError);
 
 			await expect(videoConsumer.setPriority(0)).rejects.toThrow(TypeError);
 
-			// @ts-ignore
+			// @ts-expect-error --- Testing purposes.
 			await expect(videoConsumer.setPriority('foo')).rejects.toThrow(TypeError);
 		}, 2000);
 
@@ -985,7 +985,7 @@ export default function(mediasoup): void
 
 			expect(dump2.traceEventTypes).toEqual(expect.arrayContaining([]));
 
-			// @ts-ignore
+			// @ts-expect-error --- Testing purposes.
 			await audioConsumer.enableTraceEvent(['nack', 'FOO', 'fir']);
 
 			const dump3 = await audioConsumer.dump();
@@ -1007,16 +1007,16 @@ export default function(mediasoup): void
 				rtpCapabilities: ctx.consumerDeviceCapabilities,
 			});
 
-			// @ts-ignore
+			// @ts-expect-error --- Testing purposes.
 			await expect(audioConsumer.enableTraceEvent(123)).rejects.toThrow(TypeError);
 
-			// @ts-ignore
+			// @ts-expect-error --- Testing purposes.
 			await expect(audioConsumer.enableTraceEvent('rtp')).rejects.toThrow(
 				TypeError
 			);
 
 			await expect(
-				// @ts-ignore
+				// @ts-expect-error --- Testing purposes.
 				audioConsumer.enableTraceEvent(['fir', 123.123])
 			).rejects.toThrow(TypeError);
 		}, 2000);
@@ -1148,7 +1148,7 @@ export default function(mediasoup): void
 
 			await expect(audioConsumer.resume()).rejects.toThrow(Error);
 
-			// @ts-ignore
+			// @ts-expect-error --- Testing purposes.
 			await expect(audioConsumer.setPreferredLayers({})).rejects.toThrow(Error);
 
 			await expect(audioConsumer.setPriority(2)).rejects.toThrow(Error);
