@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+const {ok} = require('node:assert');
 const {mkdir, rm, writeFile} = require('node:fs/promises');
 const {basename, dirname, sep} = require('node:path');
 const {Readable} = require('node:stream');
@@ -97,7 +98,7 @@ if(!version?.length)
 
 (async function()
 {
-  const [{body}] = await Promise.all([
+  const [response] = await Promise.all([
     fetch(`https://api.github.com/repos/${repo}/tarball/${version}`),
     rm('src', options)
     .then(mkdir.bind(null, 'src', options))
@@ -106,7 +107,9 @@ if(!version?.length)
     .then(writeFile.bind(null, 'src/utils.ts', utilsTs, 'utf8'))
   ])
 
-  const extract = Readable.fromWeb(body).pipe(createGunzip()).pipe(tar.extract())
+  ok(response.ok, response.statusText)
+
+  const extract = Readable.fromWeb(response.body).pipe(createGunzip()).pipe(tar.extract())
 
   for await (const entry of extract)
   {
