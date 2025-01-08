@@ -1,6 +1,6 @@
 {
   "name": "@mafalda-sfu/mediasoup-node-tests",
-  "version": "3.14.16",
+  "version": "3.15.2",
   "description": "Node.js tests extracted from Mediasoup",
   "exports": {
     ".": "./index.js",
