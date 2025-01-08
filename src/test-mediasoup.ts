@@ -1,13 +1,12 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { enhancedOnce } from './enhancedEvents';
+import type { WorkerEvents } from '../types';
 
 import {sync} from 'pkg-dir'
 
 export default function(mediasoup): void
 {
-	const { WorkerEvents } = mediasoup.types;
-
 	describe('mediasoup', () =>
 	{
 		const PKG = JSON.parse(

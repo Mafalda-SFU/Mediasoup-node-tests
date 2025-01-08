@@ -2,11 +2,10 @@ import * as dgram from 'node:dgram';
 // @ts-expect-error -- sctp library doesn't have TS types.
 import * as sctp from 'sctp';
 import { enhancedOnce } from './enhancedEvents';
+import type { WorkerEvents } from '../types';
 
 export default function(mediasoup): void
 {
-	const { WorkerEvents } = mediasoup.types;
-
 	describe('node-sctp', () =>
 	{
 		type TestContext = {

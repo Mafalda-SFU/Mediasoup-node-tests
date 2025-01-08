@@ -1,16 +1,15 @@
 import { pickPort } from 'pick-port';
 import { enhancedOnce } from './enhancedEvents';
+import type {
+	WorkerEvents,
+	ConsumerEvents,
+	ProducerObserverEvents,
+	DataConsumerEvents,
+} from '../types';
 import * as utils from './utils';
 
 export default function(mediasoup): void
 {
-	const {
-		WorkerEvents,
-		ConsumerEvents,
-		ProducerObserverEvents,
-		DataConsumerEvents,
-	} = mediasoup.types;
-
 	describe('PipeTransport', () =>
 	{
 		type TestContext = {
@@ -528,6 +527,8 @@ export default function(mediasoup): void
 				enableRtx: true,
 			});
 
+			expect(pipeTransport.type).toBe('pipe');
+
 			const pipeConsumer = await pipeTransport.consume({
 				producerId: ctx.videoProducer!.id,
 			});
@@ -851,7 +852,7 @@ export default function(mediasoup): void
 
 			// We need to obtain the pipeProducer to await for its 'puase' and 'resume'
 			// events, otherwise we may get errors like this:
-			// InvalidStateError: Channel closed, pending request aborted [method:PRODUCER_PAUSE, id:8]
+			// /*InvalidState*/Error: Channel closed, pending request aborted [method:PRODUCER_PAUSE, id:8]
 			// See related fixed issue:
 			// https://github.com/versatica/mediasoup/issues/1374
 			const { pipeProducer: pipeVideoProducer } = await ctx.router1!.pipeToRouter({
@@ -1085,7 +1086,7 @@ export default function(mediasoup): void
 			const pipeTransportsB = new Map();
 
 			routerA.observer.on('newtransport', transport => {
-				if (transport.constructor.name !== 'PipeTransport') {
+				if (transport.constructor.name !== 'PipeTransportImpl') {
 					return;
 				}
 
@@ -1094,7 +1095,7 @@ export default function(mediasoup): void
 			});
 
 			routerB.observer.on('newtransport', transport => {
-				if (transport.constructor.name !== 'PipeTransport') {
+				if (transport.constructor.name !== 'PipeTransportImpl') {
 					return;
 				}
 

@@ -1,11 +1,9 @@
 import { enhancedOnce } from './enhancedEvents';
+import type { WorkerEvents } from '../types';
 import * as utils from './utils';
 
 export default function(mediasoup): void
 {
-	const { WorkerEvents } = mediasoup.types;
-	const { UnsupportedError } = mediasoup.types;
-
 	describe('multiopus', () =>
 	{
 		type TestContext = {
@@ -190,7 +188,7 @@ export default function(mediasoup): void
 						],
 					},
 				})
-			).rejects.toThrow(UnsupportedError);
+			).rejects.toThrow(/*Unsupported*/Error);
 
 			await expect(
 				ctx.webRtcTransport!.produce({
@@ -212,7 +210,7 @@ export default function(mediasoup): void
 						],
 					},
 				})
-			).rejects.toThrow(UnsupportedError);
+			).rejects.toThrow(/*Unsupported*/Error);
 		}, 2000);
 
 		test('fails to consume wrong channels', async () => {

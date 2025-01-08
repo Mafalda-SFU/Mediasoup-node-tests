@@ -1,11 +1,12 @@
 import { pickPort } from 'pick-port';
 import { enhancedOnce } from './enhancedEvents';
+import type { WorkerImpl } from '../Worker';
+import type { WorkerEvents, WebRtcServerEvents } from '../types';
+import type { WebRtcServerImpl } from '../WebRtcServer';
+import type { RouterImpl } from '../Router';
 
 export default function(mediasoup): void
 {
-	const { WorkerEvents, WebRtcServerEvents } = mediasoup.types;
-	const { InvalidStateError } = mediasoup.types;
-
 	describe('WebRtcServer', () =>
 	{
 		type TestContext = {
@@ -84,15 +85,15 @@ export default function(mediasoup): void
 				tupleHashes: [],
 			});
 
-			// Private API.
-			expect(ctx.worker!.webRtcServersForTesting.size).toBe(1);
+			// API not exposed in the interface.
+			expect((ctx.worker! as WorkerImpl).webRtcServersForTesting.size).toBe(1);
 
 			ctx.worker!.close();
 
 			expect(webRtcServer.closed).toBe(true);
 
-			// Private API.
-			expect(ctx.worker!.webRtcServersForTesting.size).toBe(0);
+			// API not exposed in the interface.
+			expect((ctx.worker! as WorkerImpl).webRtcServersForTesting.size).toBe(0);
 		}, 2000);
 
 		test('worker.createWebRtcServer() with portRange succeeds', async () => {
@@ -153,15 +154,15 @@ export default function(mediasoup): void
 				tupleHashes: [],
 			});
 
-			// Private API.
-			expect(ctx.worker!.webRtcServersForTesting.size).toBe(1);
+			// API not exposed in the interface.
+			expect((ctx.worker! as WorkerImpl).webRtcServersForTesting.size).toBe(1);
 
 			ctx.worker!.close();
 
 			expect(webRtcServer.closed).toBe(true);
 
-			// Private API.
-			expect(ctx.worker!.webRtcServersForTesting.size).toBe(0);
+			// API not exposed in the interface.
+			expect((ctx.worker! as WorkerImpl).webRtcServersForTesting.size).toBe(0);
 		}, 2000);
 
 		test('worker.createWebRtcServer() without specifying port/portRange succeeds', async () => {
@@ -209,15 +210,15 @@ export default function(mediasoup): void
 				tupleHashes: [],
 			});
 
-			// Private API.
-			expect(ctx.worker!.webRtcServersForTesting.size).toBe(1);
+			// API not exposed in the interface.
+			expect((ctx.worker! as WorkerImpl).webRtcServersForTesting.size).toBe(1);
 
 			ctx.worker!.close();
 
 			expect(webRtcServer.closed).toBe(true);
 
-			// Private API.
-			expect(ctx.worker!.webRtcServersForTesting.size).toBe(0);
+			// API not exposed in the interface.
+			expect((ctx.worker! as WorkerImpl).webRtcServersForTesting.size).toBe(0);
 		}, 2000);
 
 		test('worker.createWebRtcServer() with wrong arguments rejects with TypeError', async () => {
@@ -316,7 +317,7 @@ export default function(mediasoup): void
 			worker2.close();
 		}, 2000);
 
-		test('worker.createWebRtcServer() rejects with InvalidStateError if Worker is closed', async () => {
+		test('worker.createWebRtcServer() rejects with /*InvalidState*/Error if Worker is closed', async () => {
 			ctx.worker!.close();
 
 			const port = await pickPort({
@@ -329,7 +330,7 @@ export default function(mediasoup): void
 				ctx.worker!.createWebRtcServer({
 					listenInfos: [{ protocol: 'udp', ip: '127.0.0.1', port }],
 				})
-			).rejects.toThrow(InvalidStateError);
+			).rejects.toThrow(/*InvalidState*/Error);
 		}, 2000);
 
 		test('webRtcServer.close() succeeds', async () => {
@@ -439,8 +440,12 @@ export default function(mediasoup): void
 			expect(transport.iceState).toBe('new');
 			expect(transport.iceSelectedTuple).toBeUndefined();
 
-			expect(webRtcServer.webRtcTransportsForTesting.size).toBe(1);
-			expect(router.transportsForTesting.size).toBe(1);
+			// API not exposed in the interface.
+			expect(
+				(webRtcServer as WebRtcServerImpl).webRtcTransportsForTesting.size
+			).toBe(1);
+			// API not exposed in the interface.
+			expect((router as RouterImpl).transportsForTesting.size).toBe(1);
 
 			await expect(webRtcServer.dump()).resolves.toMatchObject({
 				id: webRtcServer.id,
@@ -458,8 +463,12 @@ export default function(mediasoup): void
 			expect(transport.closed).toBe(true);
 			expect(onObserverWebRtcTransportUnhandled).toHaveBeenCalledTimes(1);
 			expect(onObserverWebRtcTransportUnhandled).toHaveBeenCalledWith(transport);
-			expect(webRtcServer.webRtcTransportsForTesting.size).toBe(0);
-			expect(router.transportsForTesting.size).toBe(0);
+			// API not exposed in the interface.
+			expect(
+				(webRtcServer as WebRtcServerImpl).webRtcTransportsForTesting.size
+			).toBe(0);
+			// API not exposed in the interface.
+			expect((router as RouterImpl).transportsForTesting.size).toBe(0);
 
 			await expect(webRtcServer.dump()).resolves.toMatchObject({
 				id: webRtcServer.id,
@@ -535,8 +544,12 @@ export default function(mediasoup): void
 			expect(transport.iceState).toBe('new');
 			expect(transport.iceSelectedTuple).toBeUndefined();
 
-			expect(webRtcServer.webRtcTransportsForTesting.size).toBe(1);
-			expect(router.transportsForTesting.size).toBe(1);
+			// API not exposed in the interface.
+			expect(
+				(webRtcServer as WebRtcServerImpl).webRtcTransportsForTesting.size
+			).toBe(1);
+			// API not exposed in the interface.
+			expect((router as RouterImpl).transportsForTesting.size).toBe(1);
 
 			await expect(webRtcServer.dump()).resolves.toMatchObject({
 				id: webRtcServer.id,
@@ -585,8 +598,12 @@ export default function(mediasoup): void
 			expect(transport.iceSelectedTuple).toBe(undefined);
 			expect(transport.dtlsState).toBe('closed');
 			expect(transport.sctpState).toBe(undefined);
-			expect(webRtcServer.webRtcTransportsForTesting.size).toBe(0);
-			expect(router.transportsForTesting.size).toBe(0);
+			// API not exposed in the interface.
+			expect(
+				(webRtcServer as WebRtcServerImpl).webRtcTransportsForTesting.size
+			).toBe(0);
+			// API not exposed in the interface.
+			expect((router as RouterImpl).transportsForTesting.size).toBe(0);
 
 			await expect(ctx.worker!.dump()).resolves.toMatchObject({
 				pid: ctx.worker!.pid,

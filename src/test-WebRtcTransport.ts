@@ -1,8 +1,11 @@
 import { pickPort } from 'pick-port';
 import * as flatbuffers from 'flatbuffers';
 import { enhancedOnce } from './enhancedEvents';
+import type { WorkerEvents, WebRtcTransportEvents } from '../types';
+import type { WebRtcTransportImpl } from '../WebRtcTransport';
+import type { TransportTuple } from './TransportTypes';
+import { serializeProtocol } from './Transport';
 import * as utils from './utils';
-import { serializeProtocol, TransportTuple } from './Transport';
 import {
 	Notification,
 	Body as NotificationBody,
@@ -13,8 +16,6 @@ import * as FbsWebRtcTransport from '@mafalda-sfu/mediasoup-node-fbs/web-rtc-tra
 
 export default function(mediasoup): void
 {
-	const { WorkerEvents, WebRtcTransportEvents } = mediasoup.types;
-
 	describe('WebRtcTransport', () =>
 	{
 		type TestContext = {
@@ -127,6 +128,7 @@ export default function(mediasoup): void
 			expect(onObserverNewTransport).toHaveBeenCalledWith(webRtcTransport);
 			expect(typeof webRtcTransport.id).toBe('string');
 			expect(webRtcTransport.closed).toBe(false);
+			expect(webRtcTransport.type).toBe('webrtc');
 			expect(webRtcTransport.appData).toEqual({ foo: 'bar' });
 			expect(webRtcTransport.iceRole).toBe('controlled');
 			expect(typeof webRtcTransport.iceParameters).toBe('object');
@@ -186,7 +188,6 @@ export default function(mediasoup): void
 			const dump = await webRtcTransport.dump();
 
 			expect(dump.id).toBe(webRtcTransport.id);
-			expect(dump.direct).toBe(false);
 			expect(dump.producerIds).toEqual([]);
 			expect(dump.consumerIds).toEqual([]);
 			expect(dump.iceRole).toBe(webRtcTransport.iceRole);
@@ -624,7 +625,7 @@ export default function(mediasoup): void
 				traceEventTypes: ['probation'],
 			});
 
-			await webRtcTransport.enableTraceEvent([]);
+			await webRtcTransport.enableTraceEvent();
 			await expect(webRtcTransport.dump()).resolves.toMatchObject({
 				traceEventTypes: [],
 			});
@@ -671,8 +672,8 @@ export default function(mediasoup): void
 				],
 			});
 
-			// Private API.
-			const channel = webRtcTransport.channelForTesting;
+			// API not exposed in the interface.
+			const channel = (webRtcTransport as WebRtcTransportImpl).channelForTesting;
 			const onIceStateChange = jest.fn();
 
 			webRtcTransport.on('icestatechange', onIceStateChange);

@@ -1,11 +1,10 @@
 import { enhancedOnce } from './enhancedEvents';
+import type { WorkerImpl } from '../Worker';
+import type { WorkerEvents, RouterEvents } from '../types';
 import * as utils from './utils';
 
 export default function(mediasoup): void
 {
-	const { WorkerEvents, RouterEvents } = mediasoup.types;
-	const { InvalidStateError } = mediasoup.types;
-
 	describe('Router', () =>
 	{
 		type TestContext = {
@@ -98,15 +97,15 @@ export default function(mediasoup): void
 				mapDataConsumerIdDataProducerId: {},
 			});
 
-			// Private API.
-			expect(ctx.worker!.routersForTesting.size).toBe(1);
+			// API not exposed in the interface.
+			expect((ctx.worker! as WorkerImpl).routersForTesting.size).toBe(1);
 
 			ctx.worker!.close();
 
 			expect(router.closed).toBe(true);
 
-			// Private API.
-			expect(ctx.worker!.routersForTesting.size).toBe(0);
+			// API not exposed in the interface.
+			expect((ctx.worker! as WorkerImpl).routersForTesting.size).toBe(0);
 		}, 2000);
 
 		test('worker.createRouter() with wrong arguments rejects with TypeError', async () => {
@@ -121,12 +120,12 @@ export default function(mediasoup): void
 			).rejects.toThrow(TypeError);
 		}, 2000);
 
-		test('worker.createRouter() rejects with InvalidStateError if Worker is closed', async () => {
+		test('worker.createRouter() rejects with /*InvalidState*/Error if Worker is closed', async () => {
 			ctx.worker!.close();
 
 			await expect(
 				ctx.worker!.createRouter({ mediaCodecs: ctx.mediaCodecs })
-			).rejects.toThrow(InvalidStateError);
+			).rejects.toThrow(/*InvalidState*/Error);
 		}, 2000);
 
 		test('router.close() succeeds', async () => {

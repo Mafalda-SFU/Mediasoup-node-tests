@@ -1,10 +1,9 @@
 import { enhancedOnce } from './enhancedEvents';
+import type { WorkerEvents, ActiveSpeakerObserverEvents } from '../types';
 import * as utils from './utils';
 
 export default function(mediasoup): void
 {
-	const { WorkerEvents, ActiveSpeakerObserverEvents } = mediasoup.types;
-
 	describe('ActiveSpeakerObserver', () =>
 	{
 		type TestContext = {
@@ -52,6 +51,7 @@ export default function(mediasoup): void
 			expect(onObserverNewRtpObserver).toHaveBeenCalledWith(activeSpeakerObserver);
 			expect(typeof activeSpeakerObserver.id).toBe('string');
 			expect(activeSpeakerObserver.closed).toBe(false);
+			expect(activeSpeakerObserver.type).toBe('activespeaker');
 			expect(activeSpeakerObserver.paused).toBe(false);
 			expect(activeSpeakerObserver.appData).toEqual({});
 
@@ -89,8 +89,8 @@ export default function(mediasoup): void
 		}, 2000);
 
 		test('activeSpeakerObserver.close() succeeds', async () => {
-			const activeSpeakerObserver = await ctx.router!.createAudioLevelObserver({
-				maxEntries: 8,
+			const activeSpeakerObserver = await ctx.router!.createActiveSpeakerObserver({
+				interval: 500,
 			});
 
 			let dump = await ctx.router!.dump();
@@ -107,7 +107,7 @@ export default function(mediasoup): void
 		}, 2000);
 
 		test('ActiveSpeakerObserver emits "routerclose" if Router is closed', async () => {
-			const activeSpeakerObserver = await ctx.router!.createAudioLevelObserver();
+			const activeSpeakerObserver = await ctx.router!.createActiveSpeakerObserver();
 
 			const promise = enhancedOnce<ActiveSpeakerObserverEvents>(
 				activeSpeakerObserver,
@@ -121,7 +121,7 @@ export default function(mediasoup): void
 		}, 2000);
 
 		test('ActiveSpeakerObserver emits "routerclose" if Worker is closed', async () => {
-			const activeSpeakerObserver = await ctx.router!.createAudioLevelObserver();
+			const activeSpeakerObserver = await ctx.router!.createActiveSpeakerObserver();
 
 			const promise = enhancedOnce<ActiveSpeakerObserverEvents>(
 				activeSpeakerObserver,

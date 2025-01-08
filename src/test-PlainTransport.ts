@@ -1,12 +1,11 @@
 import * as os from 'node:os';
 import { pickPort } from 'pick-port';
 import { enhancedOnce } from './enhancedEvents';
+import type { WorkerEvents, PlainTransportEvents } from '../types';
 import * as utils from './utils';
 
 export default function(mediasoup): void
 {
-	const { WorkerEvents, PlainTransportEvents } = mediasoup.types;
-
 	describe('PlainTransport', () =>
 	{
 		const IS_WINDOWS = os.platform() === 'win32';
@@ -95,6 +94,7 @@ export default function(mediasoup): void
 			expect(onObserverNewTransport).toHaveBeenCalledWith(plainTransport2);
 			expect(typeof plainTransport2.id).toBe('string');
 			expect(plainTransport2.closed).toBe(false);
+			expect(plainTransport2.type).toBe('plain');
 			expect(plainTransport2.appData).toEqual({ foo: 'bar' });
 			expect(typeof plainTransport2.tuple).toBe('object');
 			// @deprecated Use tuple.localAddress instead.
@@ -115,7 +115,6 @@ export default function(mediasoup): void
 			const dump1 = await plainTransport2.dump();
 
 			expect(dump1.id).toBe(plainTransport2.id);
-			expect(dump1.direct).toBe(false);
 			expect(dump1.producerIds).toEqual([]);
 			expect(dump1.consumerIds).toEqual([]);
 			expect(dump1.tuple).toEqual(plainTransport2.tuple);
@@ -170,7 +169,6 @@ export default function(mediasoup): void
 			const dump2 = await transport2.dump();
 
 			expect(dump2.id).toBe(transport2.id);
-			expect(dump2.direct).toBe(false);
 			expect(dump2.tuple).toEqual(transport2.tuple);
 			expect(dump2.rtcpTuple).toEqual(transport2.rtcpTuple);
 			expect(dump2.sctpState).toBeUndefined();
@@ -200,7 +198,7 @@ export default function(mediasoup): void
 			).rejects.toThrow(TypeError);
 
 			await expect(
-				ctx.router!.createPipeTransport({
+				ctx.router!.createPlainTransport({
 					listenInfo: { protocol: 'tcp', ip: '127.0.0.1' },
 				})
 			).rejects.toThrow(TypeError);

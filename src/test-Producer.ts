@@ -1,5 +1,7 @@
 import * as flatbuffers from 'flatbuffers';
 import { enhancedOnce } from './enhancedEvents';
+import type { WorkerEvents, ProducerEvents } from '../types';
+import type { ProducerImpl } from '../Producer';
 import * as utils from './utils';
 import {
 	Notification,
@@ -10,9 +12,6 @@ import * as FbsProducer from '@mafalda-sfu/mediasoup-node-fbs/producer';
 
 export default function(mediasoup): void
 {
-	const { WorkerEvents, ProducerEvents } = mediasoup.types;
-	const { UnsupportedError } = mediasoup.types;
-
 	describe('Producer', () =>
 	{
 		type TestContext = {
@@ -365,7 +364,7 @@ export default function(mediasoup): void
 			).rejects.toThrow(TypeError);
 		}, 2000);
 
-		test('webRtcTransport1.produce() with unsupported codecs rejects with UnsupportedError', async () => {
+		test('webRtcTransport1.produce() with unsupported codecs rejects with /*Unsupported*/Error', async () => {
 			await expect(
 				ctx.webRtcTransport1!.produce({
 					kind: 'audio',
@@ -382,7 +381,7 @@ export default function(mediasoup): void
 						rtcp: { cname: 'audio' },
 					},
 				})
-			).rejects.toThrow(UnsupportedError);
+			).rejects.toThrow(/*Unsupported*/Error);
 
 			// Invalid H264 profile-level-id.
 			await expect(
@@ -410,7 +409,7 @@ export default function(mediasoup): void
 						encodings: [{ ssrc: 6666, rtx: { ssrc: 6667 } }],
 					},
 				})
-			).rejects.toThrow(UnsupportedError);
+			).rejects.toThrow(/*Unsupported*/Error);
 		}, 2000);
 
 		test('transport.produce() with already used MID or SSRC rejects with Error', async () => {
@@ -684,7 +683,7 @@ export default function(mediasoup): void
 
 			expect(dump1.traceEventTypes).toEqual(expect.arrayContaining(['rtp', 'pli']));
 
-			await audioProducer.enableTraceEvent([]);
+			await audioProducer.enableTraceEvent();
 
 			const dump2 = await audioProducer.dump();
 
@@ -730,8 +729,8 @@ export default function(mediasoup): void
 				ctx.videoProducerOptions
 			);
 
-			// Private API.
-			const channel = videoProducer.channelForTesting;
+			// API not exposed in the interface.
+			const channel = (videoProducer as ProducerImpl).channelForTesting;
 			const onScore = jest.fn();
 
 			videoProducer.on('score', onScore);

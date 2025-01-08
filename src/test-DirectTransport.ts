@@ -1,9 +1,9 @@
 import { enhancedOnce } from './enhancedEvents';
+import type { DirectTransportEvents } from '../DirectTransportTypes';
+import type { WorkerEvents } from '../types';
 
 export default function(mediasoup): void
 {
-	const { WorkerEvents, DirectTransportEvents } = mediasoup.types;
-
 	describe('DirectTransport', () =>
 	{
 		type TestContext = {
@@ -43,13 +43,13 @@ export default function(mediasoup): void
 			expect(onObserverNewTransport).toHaveBeenCalledTimes(1);
 			expect(onObserverNewTransport).toHaveBeenCalledWith(directTransport);
 			expect(typeof directTransport.id).toBe('string');
+			expect(directTransport.type).toBe('direct');
 			expect(directTransport.closed).toBe(false);
 			expect(directTransport.appData).toEqual({ foo: 'bar' });
 
 			const dump = await directTransport.dump();
 
 			expect(dump.id).toBe(directTransport.id);
-			expect(dump.direct).toBe(true);
 			expect(dump.producerIds).toEqual([]);
 			expect(dump.consumerIds).toEqual([]);
 			expect(dump.dataProducerIds).toEqual([]);

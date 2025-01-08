@@ -1,10 +1,9 @@
 import { enhancedOnce } from './enhancedEvents';
+import type { WorkerEvents, DataConsumerEvents } from '../types';
 import * as utils from './utils';
 
 export default function(mediasoup): void
 {
-	const { WorkerEvents, DataConsumerEvents } = mediasoup.types;
-
 	describe('DataConsumer', () =>
 	{
 		type TestContext = {

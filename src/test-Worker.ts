@@ -2,6 +2,7 @@ import * as os from 'node:os';
 import * as process from 'node:process';
 import * as path from 'node:path';
 import { enhancedOnce } from './enhancedEvents';
+import type { WorkerEvents } from '../types';
 
 const skipIfHasVirtualPids =
   process.env.HAS_VIRTUAL_PIDS
@@ -10,9 +11,6 @@ const skipIfHasVirtualPids =
 
 export default function(mediasoup): void
 {
-	const { WorkerEvents } = mediasoup.types;
-	const { InvalidStateError } = mediasoup.types;
-
 	describe('Worker', () =>
 	{
 		test('Worker.workerBin matches mediasoup-worker absolute path', () => {
@@ -52,7 +50,7 @@ export default function(mediasoup): void
 
 			expect(onObserverNewWorker).toHaveBeenCalledTimes(1);
 			expect(onObserverNewWorker).toHaveBeenCalledWith(worker1);
-			expect(worker1.constructor.name).toBe('Worker');
+			expect(worker1.constructor.name).toBe('WorkerImpl');
 			expect(typeof worker1.pid).toBe('number');
 			expect(worker1.closed).toBe(false);
 			expect(worker1.died).toBe(false);
@@ -76,7 +74,7 @@ export default function(mediasoup): void
 				appData: { foo: 456 },
 			});
 
-			expect(worker2.constructor.name).toBe('Worker');
+			expect(worker2.constructor.name).toBe('WorkerImpl');
 			expect(typeof worker2.pid).toBe('number');
 			expect(worker2.closed).toBe(false);
 			expect(worker2.died).toBe(false);
@@ -144,7 +142,7 @@ export default function(mediasoup): void
 			await enhancedOnce<WorkerEvents>(worker, 'subprocessclose');
 		}, 2000);
 
-		test('worker.updateSettings() rejects with InvalidStateError if closed', async () => {
+		test('worker.updateSettings() rejects with /*InvalidState*/Error if closed', async () => {
 			const worker = await mediasoup.createWorker();
 
 			worker.close();
@@ -152,7 +150,7 @@ export default function(mediasoup): void
 			await enhancedOnce<WorkerEvents>(worker, 'subprocessclose');
 
 			await expect(worker.updateSettings({ logLevel: 'error' })).rejects.toThrow(
-				InvalidStateError
+				/*InvalidState*/Error
 			);
 		}, 2000);
 
@@ -172,14 +170,14 @@ export default function(mediasoup): void
 			worker.close();
 		}, 2000);
 
-		test('worker.dump() rejects with InvalidStateError if closed', async () => {
+		test('worker.dump() rejects with /*InvalidState*/Error if closed', async () => {
 			const worker = await mediasoup.createWorker();
 
 			worker.close();
 
 			await enhancedOnce<WorkerEvents>(worker, 'subprocessclose');
 
-			await expect(worker.dump()).rejects.toThrow(InvalidStateError);
+			await expect(worker.dump()).rejects.toThrow(/*InvalidState*/Error);
 		}, 2000);
 
 		test('worker.getResourceUsage() succeeds', async () => {

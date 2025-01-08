@@ -1,5 +1,7 @@
 import * as flatbuffers from 'flatbuffers';
 import { enhancedOnce } from './enhancedEvents';
+import type { WorkerEvents, ConsumerEvents } from '../types';
+import type { ConsumerImpl } from '../Consumer';
 import * as utils from './utils';
 import {
 	Notification,
@@ -10,9 +12,6 @@ import * as FbsConsumer from '@mafalda-sfu/mediasoup-node-fbs/consumer';
 
 export default function(mediasoup): void
 {
-	const { WorkerEvents, ConsumerEvents } = mediasoup.types;
-	const { UnsupportedError } = mediasoup.types;
-
 	describe('Consumer', () =>
 	{
 		type TestContext = {
@@ -553,7 +552,7 @@ export default function(mediasoup): void
 			);
 		}, 2000);
 
-		test('transport.consume() with incompatible rtpCapabilities rejects with UnsupportedError', async () => {
+		test('transport.consume() with incompatible rtpCapabilities rejects with /*Unsupported*/Error', async () => {
 			let invalidDeviceCapabilities: mediasoup.types.RtpCapabilities;
 
 			invalidDeviceCapabilities = {
@@ -581,7 +580,7 @@ export default function(mediasoup): void
 					producerId: ctx.audioProducer!.id,
 					rtpCapabilities: invalidDeviceCapabilities,
 				})
-			).rejects.toThrow(UnsupportedError);
+			).rejects.toThrow(/*Unsupported*/Error);
 
 			invalidDeviceCapabilities = {
 				codecs: [],
@@ -600,7 +599,7 @@ export default function(mediasoup): void
 					producerId: ctx.audioProducer!.id,
 					rtpCapabilities: invalidDeviceCapabilities,
 				})
-			).rejects.toThrow(UnsupportedError);
+			).rejects.toThrow(/*Unsupported*/Error);
 		}, 2000);
 
 		test('consumer.dump() succeeds', async () => {
@@ -979,7 +978,7 @@ export default function(mediasoup): void
 
 			expect(dump1.traceEventTypes).toEqual(expect.arrayContaining(['rtp', 'pli']));
 
-			await audioConsumer.enableTraceEvent([]);
+			await audioConsumer.enableTraceEvent();
 
 			const dump2 = await audioConsumer.dump();
 
@@ -1056,8 +1055,8 @@ export default function(mediasoup): void
 				rtpCapabilities: ctx.consumerDeviceCapabilities,
 			});
 
-			// Private API.
-			const channel = audioConsumer.channelForTesting;
+			// API not exposed in the interface.
+			const channel = (audioConsumer as ConsumerImpl).channelForTesting;
 			const onScore = jest.fn();
 
 			audioConsumer.on('score', onScore);
