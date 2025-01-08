@@ -82,6 +82,15 @@ export function deepFreeze<T>(object: T): T
 }`
 
 
+async function createFiles()
+{
+  return Promise.all([
+    writeFile('src/Transport.ts', TransportTs, 'utf8'),
+    writeFile('src/enhancedEvents.ts', enhancedEventsTs, 'utf8'),
+    writeFile('src/utils.ts', utilsTs, 'utf8')
+  ])
+}
+
 function filterOrtcUnsuportedError(line)
 {
   return this.toString() !== 'ortc' || !line.includes('UnsupportedError')
@@ -102,9 +111,7 @@ if(!version?.length)
     fetch(`https://api.github.com/repos/${repo}/tarball/${version}`),
     rm('src', options)
     .then(mkdir.bind(null, 'src', options))
-    .then(writeFile.bind(null, 'src/Transport.ts', TransportTs, 'utf8'))
-    .then(writeFile.bind(null, 'src/enhancedEvents.ts', enhancedEventsTs, 'utf8'))
-    .then(writeFile.bind(null, 'src/utils.ts', utilsTs, 'utf8'))
+    .then(createFiles)
   ])
 
   ok(response.ok, response.statusText)
