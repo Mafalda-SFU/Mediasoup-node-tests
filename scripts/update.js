@@ -164,7 +164,6 @@ if(!version?.length)
 
               let describeName
               let importStatement
-              let imports = []
               let indent = ''
               let insideImport = false
 
@@ -198,27 +197,7 @@ if(!version?.length)
                   if(line.includes('mediasoup')) continue
 
                   // Replace imports of mediasoup types.
-                  if(line.includes('../errors'))
-                  {
-                    imports.push(
-                      importStatement
-                        .replace('import', 'const')
-                        .replaceAll('\n', '\n\t')
-                        .replace("from '../errors'", '= mediasoup.types')
-                    )
-                    continue
-                  }
-
-                  if(line.includes('../types'))
-                  {
-                    imports.push(
-                      importStatement
-                        .replace('import', 'const')
-                        .replaceAll('\n', '\n\t')
-                        .replace("from '../types'", '= mediasoup.types')
-                    )
-                    continue
-                  }
+                  if(line.includes('../errors')) continue
 
                   if(line.includes('../fbs'))
                     line = importStatement.replace(
@@ -242,6 +221,9 @@ if(!version?.length)
 
                   else if(line.includes('../utils'))
                     line = importStatement.replace('../utils', './utils')
+
+                  else
+                    line = importStatement
                 }
 
                 else if(!indent)
@@ -280,17 +262,6 @@ if(!version?.length)
                   content.push('export default function(mediasoup): void')
                   content.push('{')
 
-                  imports = imports.filter(
-                    filterOrtcUnsuportedError, describeName
-                  )
-
-                  if(imports.length)
-                  {
-                    for(const line of imports) content.push('\t' + line)
-
-                    content.push('')
-                  }
-
                   content.push(`\tdescribe('${describeName}', () =>`)
                   content.push('\t{')
                 }
@@ -303,20 +274,22 @@ if(!version?.length)
                     )
                 }
 
-                else if(describeName === 'ortc')
-                {
-                  if(line.includes('UnsupportedError'))
-                    line = line.replace(
-                      'UnsupportedError', '/*Unsupported*/Error'
-                    )
-                }
-
                 else if(describeName === 'Worker')
                 {
                   if(line.includes('Worker emits "died" if worker process died')
                   || line.includes('worker process ignores PIPE, HUP, ALRM,'))
                     line = line.replace('test', 'skipIfHasVirtualPids')
                 }
+
+                if(line.includes('InvalidStateError'))
+                  line = line.replace(
+                    'InvalidStateError', '/*InvalidState*/Error'
+                  )
+
+                if(line.includes('UnsupportedError'))
+                  line = line.replace(
+                    'UnsupportedError', '/*Unsupported*/Error'
+                  )
 
                 content.push(indent + line)
               }
