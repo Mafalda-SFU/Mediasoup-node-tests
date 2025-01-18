@@ -91,11 +91,6 @@ async function createFiles()
   ])
 }
 
-function filterOrtcUnsuportedError(line)
-{
-  return this.toString() !== 'ortc' || !line.includes('UnsupportedError')
-}
-
 
 const {argv: [,, version]} = process;
 if(!version?.length)
