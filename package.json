@@ -25,7 +25,7 @@
   "license": "ISC",
   "dependencies": {
     "@mafalda-sfu/mediasoup-node-fbs": "^3.15.2",
-    "@mafalda-sfu/mediasoup-ortc": "^3.15.2",
+    "@mafalda-sfu/mediasoup-ortc": "^3.15.3-1",
     "flatbuffers": "^24.12.23",
     "pick-port": "^2.1.0",
     "pkg-dir": "~5.0.0",
