@@ -61,19 +61,19 @@ export default function(mediasoup): void
 		}, 2000);
 
 		test('router.createActiveSpeakerObserver() with wrong arguments rejects with TypeError', async () => {
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.router!.createActiveSpeakerObserver(
 					// @ts-expect-error --- Testing purposes.
 					{ interval: false }
 				)
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.router!.createActiveSpeakerObserver(
 					// @ts-expect-error --- Testing purposes.
 					{ appData: 'NOT-AN-OBJECT' }
 				)
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 		}, 2000);
 
 		test('activeSpeakerObserver.pause() and resume() succeed', async () => {

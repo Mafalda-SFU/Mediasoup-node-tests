@@ -5,6 +5,8 @@ import type { WorkerEvents, WebRtcServerEvents } from '../types';
 import type { WebRtcServerImpl } from '../WebRtcServer';
 import type { RouterImpl } from '../Router';
 
+import * as utils from './utils'
+
 export default function(mediasoup): void
 {
 	describe('WebRtcServer', () =>
@@ -223,22 +225,22 @@ export default function(mediasoup): void
 
 		test('worker.createWebRtcServer() with wrong arguments rejects with TypeError', async () => {
 			// @ts-expect-error --- Testing purposes.
-			await expect(ctx.worker!.createWebRtcServer({})).rejects.toThrow(TypeError);
+			await utils.expect_rejects_toThrow(ctx.worker!.createWebRtcServer({}), 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				// @ts-expect-error --- Testing purposes.
 				ctx.worker!.createWebRtcServer({ listenInfos: 'NOT-AN-ARRAY' })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				// @ts-expect-error --- Testing purposes.
 				ctx.worker!.createWebRtcServer({ listenInfos: ['NOT-AN-OBJECT'] })
-			).rejects.toThrow(Error);
+			, 'Error');
 
 			// Empty listenInfos so should fail.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.worker!.createWebRtcServer({ listenInfos: [] })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 		}, 2000);
 
 		test('worker.createWebRtcServer() with unavailable listenInfos rejects with Error', async () => {
@@ -255,7 +257,7 @@ export default function(mediasoup): void
 			});
 
 			// Using an unavailable listen IP.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.worker!.createWebRtcServer({
 					listenInfos: [
 						{
@@ -270,10 +272,10 @@ export default function(mediasoup): void
 						},
 					],
 				})
-			).rejects.toThrow(Error);
+			, 'Error');
 
 			// Using the same UDP port in two listenInfos.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.worker!.createWebRtcServer({
 					listenInfos: [
 						{
@@ -289,7 +291,7 @@ export default function(mediasoup): void
 						},
 					],
 				})
-			).rejects.toThrow(Error);
+			, 'Error');
 
 			await ctx.worker!.createWebRtcServer({
 				listenInfos: [
@@ -302,7 +304,7 @@ export default function(mediasoup): void
 			});
 
 			// Using the same UDP port in a second Worker.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				worker2.createWebRtcServer({
 					listenInfos: [
 						{
@@ -312,12 +314,12 @@ export default function(mediasoup): void
 						},
 					],
 				})
-			).rejects.toThrow(Error);
+			, 'Error');
 
 			worker2.close();
 		}, 2000);
 
-		test('worker.createWebRtcServer() rejects with /*InvalidState*/Error if Worker is closed', async () => {
+		test('worker.createWebRtcServer() rejects with InvalidStateError if Worker is closed', async () => {
 			ctx.worker!.close();
 
 			const port = await pickPort({
@@ -326,11 +328,11 @@ export default function(mediasoup): void
 				reserveTimeout: 0,
 			});
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.worker!.createWebRtcServer({
 					listenInfos: [{ protocol: 'udp', ip: '127.0.0.1', port }],
 				})
-			).rejects.toThrow(/*InvalidState*/Error);
+			, 'InvalidStateError');
 		}, 2000);
 
 		test('webRtcServer.close() succeeds', async () => {

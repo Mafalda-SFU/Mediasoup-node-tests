@@ -1,5 +1,7 @@
 import * as ortc from '@mafalda-sfu/mediasoup-ortc';
 
+import * as utils from './utils'
+
 export default function(mediasoup): void
 {
 	describe('ortc', () =>
@@ -120,7 +122,7 @@ export default function(mediasoup): void
 			});
 		});
 
-		test('generateRouterRtpCapabilities() with unsupported codecs throws /*Unsupported*/Error', () => {
+		test('generateRouterRtpCapabilities() with unsupported codecs throws UnsupportedError', () => {
 			let mediaCodecs: mediasoup.types.RtpCodecCapability[];
 
 			mediaCodecs = [
@@ -132,9 +134,7 @@ export default function(mediasoup): void
 				},
 			];
 
-			expect(() => ortc.generateRouterRtpCapabilities(mediaCodecs)).toThrow(
-				/*Unsupported*/Error
-			);
+			utils.expect_toThrow(() => ortc.generateRouterRtpCapabilities(mediaCodecs), 'UnsupportedError');
 
 			mediaCodecs = [
 				{
@@ -145,9 +145,7 @@ export default function(mediasoup): void
 				},
 			];
 
-			expect(() => ortc.generateRouterRtpCapabilities(mediaCodecs)).toThrow(
-				/*Unsupported*/Error
-			);
+			utils.expect_toThrow(() => ortc.generateRouterRtpCapabilities(mediaCodecs), 'UnsupportedError');
 		});
 
 		test('generateRouterRtpCapabilities() with too many codecs throws', () => {
@@ -162,9 +160,7 @@ export default function(mediasoup): void
 				});
 			}
 
-			expect(() => ortc.generateRouterRtpCapabilities(mediaCodecs)).toThrow(
-				'cannot allocate'
-			);
+			utils.expect_toThrow(() => ortc.generateRouterRtpCapabilities(mediaCodecs), 'cannot allocate');
 		});
 
 		test('getProducerRtpParametersMapping(), getConsumableRtpParameters(), getConsumerRtpParameters() and getPipeConsumerRtpParameters() succeed', () => {
@@ -510,7 +506,7 @@ export default function(mediasoup): void
 			});
 		});
 
-		test('getProducerRtpParametersMapping() with incompatible params throws /*Unsupported*/Error', () => {
+		test('getProducerRtpParametersMapping() with incompatible params throws UnsupportedError', () => {
 			const mediaCodecs: mediasoup.types.RtpCodecCapability[] = [
 				{
 					kind: 'audio',
@@ -550,9 +546,9 @@ export default function(mediasoup): void
 				},
 			};
 
-			expect(() =>
+			utils.expect_toThrow(() =>
 				ortc.getProducerRtpParametersMapping(rtpParameters, routerRtpCapabilities)
-			).toThrow(/*Unsupported*/Error);
+			, 'UnsupportedError');
 		});
 	});
 }

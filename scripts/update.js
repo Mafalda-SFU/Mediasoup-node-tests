@@ -79,6 +79,51 @@ export function deepFreeze<T>(object: T): T
   }
 
   return Object.freeze(object);
+}
+
+export async function expect_rejects_toThrow(expression, errorMessage?: string): Promise<void>
+{
+  try
+  {
+    await expression;
+  }
+  catch (error)
+  {
+    if (!errorMessage || error.toString().includes(errorMessage)) return;
+
+    throw error;
+  }
+
+  throw new Error('Expression did not throw');
+}
+
+export function expect_not_toThrow(fn: () => void, errorMessage?: string): void
+{
+  try
+  {
+    fn();
+  }
+  catch (error)
+  {
+    if(!errorMessage || error.toString().includes(errorMessage)) throw error;
+  }
+}
+
+export function expect_toThrow(fn: () => void, errorMessage?: string): void
+{
+  try
+  {
+    fn();
+  }
+  catch (error)
+  {
+    if (!errorMessage || error.toString().includes(errorMessage)) return;
+
+    console.log(error, error.name, error.toString(), errorMessage);
+    throw error;
+  }
+
+  throw new Error('Function did not throw');
 }`
 
 
@@ -89,6 +134,11 @@ async function createFiles()
     writeFile('src/enhancedEvents.ts', enhancedEventsTs, 'utf8'),
     writeFile('src/utils.ts', utilsTs, 'utf8')
   ])
+}
+
+function importUtils(line)
+{
+  return line.includes('import * as utils from')
 }
 
 
@@ -158,8 +208,10 @@ if(!version?.length)
               content = []
 
               let describeName
+              let expectStatement
               let importStatement
               let indent = ''
+              let insideExpect = false
               let insideImport = false
 
               for(let line of lines)
@@ -170,15 +222,64 @@ if(!version?.length)
                   continue
                 }
 
+                if(line.includes('expect('))
+                {
+                  expectStatement = ''
+                  insideExpect = true
+                }
+
                 if(line.startsWith('import'))
                 {
                   importStatement = ''
                   insideImport = true
                 }
 
-                if(insideImport)
+                if(insideExpect)
                 {
-                  if(importStatement) importStatement += '\n'
+                  if(expectStatement) expectStatement += '\n' + indent
+                  expectStatement += line
+
+                  if(!line.includes(';')) continue
+
+                  insideExpect = false
+
+                  // https://github.com/tc39/proposal-is-error
+                  // > `instanceof Error`, of course, is unreliable because it
+                  // > will provide a false negative with a cross-realm (eg, from
+                  // > an iframe, or node's `vm` modules) `Error` instance.
+                  let replaced = expectStatement.replace(
+                    /expect\s*\((?<expression>[^;]+)\)\.rejects\.toThrow\(\s*(?<errorClass>[^;]*?)\s*\)/m,
+                    `utils.expect_rejects_toThrow($<expression>, '$<errorClass>')`
+                  )
+
+                  if(replaced === expectStatement)
+                  {
+                    replaced = expectStatement.replace(
+                      /expect\s*\((?<expression>[^;]+)\)\.toThrow\(\s*(?<errorClass>'[^']*?')\s*\)/m,
+                      `utils.expect_toThrow($<expression>, $<errorClass>)`
+                    )
+
+                    if(replaced === expectStatement)
+                    {
+                      replaced = expectStatement.replace(
+                        /expect\s*\((?<expression>[^;]+)\)\.toThrow\(\s*(?<errorClass>[^;]*?)\s*\)/m,
+                        `utils.expect_toThrow($<expression>, '$<errorClass>')`
+                      )
+
+                      if(replaced === expectStatement)
+                        replaced = expectStatement.replace(
+                          /expect\s*\((?<expression>[^;]+)\)\.not\.toThrow\(\s*(?<errorClass>[^;]*?)\s*\)/m,
+                          `utils.expect_not_toThrow($<expression>, '$<errorClass>')`
+                        )
+                    }
+                  }
+
+                  line = replaced
+                }
+
+                else if(insideImport)
+                {
+                  if(importStatement) importStatement += '\n' + indent
                   importStatement += line
 
                   if(!line.includes('from')) continue
@@ -241,8 +342,15 @@ if(!version?.length)
 
                     content.push('')
                   }
+                  else if(
+                    describeName !== 'node-sctp' &&
+                    !content.some(importUtils)
+                  ) {
+                    content.push("import * as utils from './utils'")
+                    content.push('')
+                  }
 
-                  else if(describeName === 'Worker')
+                  if(describeName === 'Worker')
                   {
                     content.push('const skipIfHasVirtualPids =')
                     content.push('  process.env.HAS_VIRTUAL_PIDS')
@@ -275,16 +383,6 @@ if(!version?.length)
                   || line.includes('worker process ignores PIPE, HUP, ALRM,'))
                     line = line.replace('test', 'skipIfHasVirtualPids')
                 }
-
-                if(line.includes('InvalidStateError'))
-                  line = line.replace(
-                    'InvalidStateError', '/*InvalidState*/Error'
-                  )
-
-                if(line.includes('UnsupportedError'))
-                  line = line.replace(
-                    'UnsupportedError', '/*Unsupported*/Error'
-                  )
 
                 content.push(indent + line)
               }

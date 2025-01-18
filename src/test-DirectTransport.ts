@@ -2,6 +2,8 @@ import { enhancedOnce } from './enhancedEvents';
 import type { DirectTransportEvents } from '../DirectTransportTypes';
 import type { WorkerEvents } from '../types';
 
+import * as utils from './utils'
+
 export default function(mediasoup): void
 {
 	describe('DirectTransport', () =>
@@ -62,14 +64,14 @@ export default function(mediasoup): void
 		}, 2000);
 
 		test('router.createDirectTransport() with wrong arguments rejects with TypeError', async () => {
-			await expect(
+			await utils.expect_rejects_toThrow(
 				// @ts-expect-error --- Testing purposes.
 				ctx.router!.createDirectTransport({ maxMessageSize: 'foo' })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.router!.createDirectTransport({ maxMessageSize: -2000 })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 		}, 2000);
 
 		test('directTransport.getStats() succeeds', async () => {
@@ -390,9 +392,9 @@ export default function(mediasoup): void
 			expect(onObserverClose).toHaveBeenCalledTimes(1);
 			expect(directTransport.closed).toBe(true);
 
-			await expect(directTransport.dump()).rejects.toThrow(Error);
+			await utils.expect_rejects_toThrow(directTransport.dump(), 'Error');
 
-			await expect(directTransport.getStats()).rejects.toThrow(Error);
+			await utils.expect_rejects_toThrow(directTransport.getStats(), 'Error');
 		}, 2000);
 
 		test('DirectTransport emits "routerclose" if Router is closed', async () => {

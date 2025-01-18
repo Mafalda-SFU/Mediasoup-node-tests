@@ -552,7 +552,7 @@ export default function(mediasoup): void
 			);
 		}, 2000);
 
-		test('transport.consume() with incompatible rtpCapabilities rejects with /*Unsupported*/Error', async () => {
+		test('transport.consume() with incompatible rtpCapabilities rejects with UnsupportedError', async () => {
 			let invalidDeviceCapabilities: mediasoup.types.RtpCapabilities;
 
 			invalidDeviceCapabilities = {
@@ -575,12 +575,12 @@ export default function(mediasoup): void
 				})
 			).toBe(false);
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.webRtcTransport2!.consume({
 					producerId: ctx.audioProducer!.id,
 					rtpCapabilities: invalidDeviceCapabilities,
 				})
-			).rejects.toThrow(/*Unsupported*/Error);
+			, 'UnsupportedError');
 
 			invalidDeviceCapabilities = {
 				codecs: [],
@@ -594,12 +594,12 @@ export default function(mediasoup): void
 				})
 			).toBe(false);
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.webRtcTransport2!.consume({
 					producerId: ctx.audioProducer!.id,
 					rtpCapabilities: invalidDeviceCapabilities,
 				})
-			).rejects.toThrow(/*Unsupported*/Error);
+			, 'UnsupportedError');
 		}, 2000);
 
 		test('consumer.dump() succeeds', async () => {
@@ -913,23 +913,21 @@ export default function(mediasoup): void
 			});
 
 			// @ts-expect-error --- Testing purposes.
-			await expect(videoConsumer.setPreferredLayers({})).rejects.toThrow(TypeError);
+			await utils.expect_rejects_toThrow(videoConsumer.setPreferredLayers({}), 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				// @ts-expect-error --- Testing purposes.
 				videoConsumer.setPreferredLayers({ foo: '123' })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
 			// @ts-expect-error --- Testing purposes.
-			await expect(videoConsumer.setPreferredLayers('foo')).rejects.toThrow(
-				TypeError
-			);
+			await utils.expect_rejects_toThrow(videoConsumer.setPreferredLayers('foo'), 'TypeError');
 
 			// Missing spatialLayer.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				// @ts-expect-error --- Testing purposes.
 				videoConsumer.setPreferredLayers({ temporalLayer: 2 })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 		}, 2000);
 
 		test('consumer.setPriority() succeed', async () => {
@@ -949,12 +947,12 @@ export default function(mediasoup): void
 			});
 
 			// @ts-expect-error --- Testing purposes.
-			await expect(videoConsumer.setPriority()).rejects.toThrow(TypeError);
+			await utils.expect_rejects_toThrow(videoConsumer.setPriority(), 'TypeError');
 
-			await expect(videoConsumer.setPriority(0)).rejects.toThrow(TypeError);
+			await utils.expect_rejects_toThrow(videoConsumer.setPriority(0), 'TypeError');
 
 			// @ts-expect-error --- Testing purposes.
-			await expect(videoConsumer.setPriority('foo')).rejects.toThrow(TypeError);
+			await utils.expect_rejects_toThrow(videoConsumer.setPriority('foo'), 'TypeError');
 		}, 2000);
 
 		test('consumer.unsetPriority() succeed', async () => {
@@ -1007,17 +1005,15 @@ export default function(mediasoup): void
 			});
 
 			// @ts-expect-error --- Testing purposes.
-			await expect(audioConsumer.enableTraceEvent(123)).rejects.toThrow(TypeError);
+			await utils.expect_rejects_toThrow(audioConsumer.enableTraceEvent(123), 'TypeError');
 
 			// @ts-expect-error --- Testing purposes.
-			await expect(audioConsumer.enableTraceEvent('rtp')).rejects.toThrow(
-				TypeError
-			);
+			await utils.expect_rejects_toThrow(audioConsumer.enableTraceEvent('rtp'), 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				// @ts-expect-error --- Testing purposes.
 				audioConsumer.enableTraceEvent(['fir', 123.123])
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 		}, 2000);
 
 		test('Consumer emits "producerpause" and "producerresume"', async () => {
@@ -1139,20 +1135,20 @@ export default function(mediasoup): void
 
 			audioConsumer.close();
 
-			await expect(audioConsumer.dump()).rejects.toThrow(Error);
+			await utils.expect_rejects_toThrow(audioConsumer.dump(), 'Error');
 
-			await expect(audioConsumer.getStats()).rejects.toThrow(Error);
+			await utils.expect_rejects_toThrow(audioConsumer.getStats(), 'Error');
 
-			await expect(audioConsumer.pause()).rejects.toThrow(Error);
+			await utils.expect_rejects_toThrow(audioConsumer.pause(), 'Error');
 
-			await expect(audioConsumer.resume()).rejects.toThrow(Error);
+			await utils.expect_rejects_toThrow(audioConsumer.resume(), 'Error');
 
 			// @ts-expect-error --- Testing purposes.
-			await expect(audioConsumer.setPreferredLayers({})).rejects.toThrow(Error);
+			await utils.expect_rejects_toThrow(audioConsumer.setPreferredLayers({}), 'Error');
 
-			await expect(audioConsumer.setPriority(2)).rejects.toThrow(Error);
+			await utils.expect_rejects_toThrow(audioConsumer.setPriority(2), 'Error');
 
-			await expect(audioConsumer.requestKeyFrame()).rejects.toThrow(Error);
+			await utils.expect_rejects_toThrow(audioConsumer.requestKeyFrame(), 'Error');
 		}, 2000);
 
 		test('Consumer emits "producerclose" if Producer is closed', async () => {

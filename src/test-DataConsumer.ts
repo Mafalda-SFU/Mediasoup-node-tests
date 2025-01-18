@@ -364,9 +364,9 @@ export default function(mediasoup): void
 
 			dataConsumer.close();
 
-			await expect(dataConsumer.dump()).rejects.toThrow(Error);
+			await utils.expect_rejects_toThrow(dataConsumer.dump(), 'Error');
 
-			await expect(dataConsumer.getStats()).rejects.toThrow(Error);
+			await utils.expect_rejects_toThrow(dataConsumer.getStats(), 'Error');
 		}, 2000);
 
 		test('DataConsumer emits "dataproducerclose" if DataProducer is closed', async () => {

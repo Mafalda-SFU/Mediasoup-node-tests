@@ -276,20 +276,18 @@ export default function(mediasoup): void
 			expect(iceCandidate2.protocol).toBe('udp');
 
 			// No more available ports so it must fail.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.router!.createWebRtcTransport({
 					listenInfos: [{ protocol: 'udp', ip: '127.0.0.1', portRange }],
 				})
-			).rejects.toThrow(Error);
+			, 'Error');
 		}, 2000);
 
 		test('router.createWebRtcTransport() with wrong arguments rejects with TypeError', async () => {
 			// @ts-expect-error --- Testing purposes.
-			await expect(ctx.router!.createWebRtcTransport({})).rejects.toThrow(
-				TypeError
-			);
+			await utils.expect_rejects_toThrow(ctx.router!.createWebRtcTransport({}), 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.router!.createWebRtcTransport({
 					listenInfos: [
 						{
@@ -299,49 +297,49 @@ export default function(mediasoup): void
 						},
 					],
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				// @ts-expect-error --- Testing purposes.
 				ctx.router!.createWebRtcTransport({ listenIps: [123] })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				// @ts-expect-error --- Testing purposes.
 				ctx.router!.createWebRtcTransport({ listenInfos: '127.0.0.1' })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				// @ts-expect-error --- Testing purposes.
 				ctx.router!.createWebRtcTransport({ listenIps: '127.0.0.1' })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.router!.createWebRtcTransport({
 					listenIps: ['127.0.0.1'],
 					// @ts-expect-error --- Testing purposes.
 					appData: 'NOT-AN-OBJECT',
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.router!.createWebRtcTransport({
 					listenIps: ['127.0.0.1'],
 					enableSctp: true,
 					// @ts-expect-error --- Testing purposes.
 					numSctpStreams: 'foo',
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 		}, 2000);
 
 		test('router.createWebRtcTransport() with non bindable IP rejects with Error', async () => {
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.router!.createWebRtcTransport({
 					listenInfos: [
 						{ protocol: 'udp', ip: '8.8.8.8', portRange: { min: 2000, max: 3000 } },
 					],
 				})
-			).rejects.toThrow(Error);
+			, 'Error');
 		}, 2000);
 
 		test('webRtcTransport.getStats() succeeds', async () => {
@@ -415,11 +413,11 @@ export default function(mediasoup): void
 			).resolves.toBeUndefined();
 
 			// Must fail if connected.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				webRtcTransport.connect({
 					dtlsParameters: dtlsRemoteParameters,
 				})
-			).rejects.toThrow(Error);
+			, 'Error');
 
 			expect(webRtcTransport.dtlsParameters.role).toBe('server');
 		}, 2000);
@@ -439,7 +437,7 @@ export default function(mediasoup): void
 			let dtlsRemoteParameters: mediasoup.types.DtlsParameters;
 
 			// @ts-expect-error --- Testing purposes.
-			await expect(webRtcTransport.connect({})).rejects.toThrow(TypeError);
+			await utils.expect_rejects_toThrow(webRtcTransport.connect({}), 'TypeError');
 
 			dtlsRemoteParameters = {
 				fingerprints: [
@@ -453,9 +451,9 @@ export default function(mediasoup): void
 				role: 'client',
 			};
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				webRtcTransport.connect({ dtlsParameters: dtlsRemoteParameters })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
 			dtlsRemoteParameters = {
 				fingerprints: [
@@ -469,22 +467,22 @@ export default function(mediasoup): void
 				role: 'chicken',
 			};
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				webRtcTransport.connect({ dtlsParameters: dtlsRemoteParameters })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
 			dtlsRemoteParameters = {
 				fingerprints: [],
 				role: 'client',
 			};
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				webRtcTransport.connect({ dtlsParameters: dtlsRemoteParameters })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				webRtcTransport.connect({ dtlsParameters: dtlsRemoteParameters })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
 			expect(webRtcTransport.dtlsParameters.role).toBe('auto');
 		}, 2000);
@@ -556,9 +554,7 @@ export default function(mediasoup): void
 				webRtcTransport.setMinOutgoingBitrate(3000000)
 			).resolves.toBeUndefined();
 
-			await expect(webRtcTransport.setMaxOutgoingBitrate(2000000)).rejects.toThrow(
-				Error
-			);
+			await utils.expect_rejects_toThrow(webRtcTransport.setMaxOutgoingBitrate(2000000), 'Error');
 
 			// Remove limit.
 			await expect(
@@ -577,9 +573,7 @@ export default function(mediasoup): void
 				webRtcTransport.setMaxOutgoingBitrate(2000000)
 			).resolves.toBeUndefined();
 
-			await expect(webRtcTransport.setMinOutgoingBitrate(3000000)).rejects.toThrow(
-				Error
-			);
+			await utils.expect_rejects_toThrow(webRtcTransport.setMinOutgoingBitrate(3000000), 'Error');
 
 			// Remove limit.
 			await expect(
@@ -650,19 +644,15 @@ export default function(mediasoup): void
 			});
 
 			// @ts-expect-error --- Testing purposes.
-			await expect(webRtcTransport.enableTraceEvent(123)).rejects.toThrow(
-				TypeError
-			);
+			await utils.expect_rejects_toThrow(webRtcTransport.enableTraceEvent(123), 'TypeError');
 
 			// @ts-expect-error --- Testing purposes.
-			await expect(webRtcTransport.enableTraceEvent('probation')).rejects.toThrow(
-				TypeError
-			);
+			await utils.expect_rejects_toThrow(webRtcTransport.enableTraceEvent('probation'), 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				// @ts-expect-error --- Testing purposes.
 				webRtcTransport.enableTraceEvent(['probation', 123.123])
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 		}, 2000);
 
 		test('WebRtcTransport events succeed', async () => {
@@ -817,26 +807,20 @@ export default function(mediasoup): void
 			expect(webRtcTransport.dtlsState).toBe('closed');
 			expect(webRtcTransport.sctpState).toBeUndefined();
 
-			await expect(webRtcTransport.dump()).rejects.toThrow(Error);
+			await utils.expect_rejects_toThrow(webRtcTransport.dump(), 'Error');
 
-			await expect(webRtcTransport.getStats()).rejects.toThrow(Error);
+			await utils.expect_rejects_toThrow(webRtcTransport.getStats(), 'Error');
 
 			// @ts-expect-error --- Testing purposes.
-			await expect(webRtcTransport.connect({})).rejects.toThrow(Error);
+			await utils.expect_rejects_toThrow(webRtcTransport.connect({}), 'Error');
 
-			await expect(webRtcTransport.setMaxIncomingBitrate(200000)).rejects.toThrow(
-				Error
-			);
+			await utils.expect_rejects_toThrow(webRtcTransport.setMaxIncomingBitrate(200000), 'Error');
 
-			await expect(webRtcTransport.setMaxOutgoingBitrate(200000)).rejects.toThrow(
-				Error
-			);
+			await utils.expect_rejects_toThrow(webRtcTransport.setMaxOutgoingBitrate(200000), 'Error');
 
-			await expect(webRtcTransport.setMinOutgoingBitrate(100000)).rejects.toThrow(
-				Error
-			);
+			await utils.expect_rejects_toThrow(webRtcTransport.setMinOutgoingBitrate(100000), 'Error');
 
-			await expect(webRtcTransport.restartIce()).rejects.toThrow(Error);
+			await utils.expect_rejects_toThrow(webRtcTransport.restartIce(), 'Error');
 		}, 2000);
 
 		test('WebRtcTransport emits "routerclose" if Router is closed', async () => {

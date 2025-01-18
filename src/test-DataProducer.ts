@@ -142,33 +142,31 @@ export default function(mediasoup): void
 		}, 2000);
 
 		test('webRtcTransport1.produceData() with wrong arguments rejects with TypeError', async () => {
-			await expect(ctx.webRtcTransport1!.produceData({})).rejects.toThrow(
-				TypeError
-			);
+			await utils.expect_rejects_toThrow(ctx.webRtcTransport1!.produceData({}), 'TypeError');
 
 			// Missing or empty sctpStreamParameters.streamId.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.webRtcTransport1!.produceData({
 					// @ts-expect-error --- Testing purposes.
 					sctpStreamParameters: { foo: 'foo' },
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 		}, 2000);
 
 		test('transport.produceData() with already used streamId rejects with Error', async () => {
 			await ctx.webRtcTransport1!.produceData(ctx.dataProducerOptions1);
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.webRtcTransport1!.produceData({
 					sctpStreamParameters: {
 						streamId: 666,
 					},
 				})
-			).rejects.toThrow(Error);
+			, 'Error');
 		}, 2000);
 
 		test('transport.produceData() with ordered and maxPacketLifeTime rejects with TypeError', async () => {
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.webRtcTransport1!.produceData({
 					sctpStreamParameters: {
 						streamId: 999,
@@ -176,7 +174,7 @@ export default function(mediasoup): void
 						maxPacketLifeTime: 4000,
 					},
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 		}, 2000);
 
 		test('dataProducer.dump() succeeds', async () => {
@@ -342,9 +340,9 @@ export default function(mediasoup): void
 
 			dataProducer1.close();
 
-			await expect(dataProducer1.dump()).rejects.toThrow(Error);
+			await utils.expect_rejects_toThrow(dataProducer1.dump(), 'Error');
 
-			await expect(dataProducer1.getStats()).rejects.toThrow(Error);
+			await utils.expect_rejects_toThrow(dataProducer1.getStats(), 'Error');
 		}, 2000);
 
 		test('DataProducer emits "transportclose" if Transport is closed', async () => {

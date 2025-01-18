@@ -272,25 +272,25 @@ export default function(mediasoup): void
 		}, 2000);
 
 		test('webRtcTransport1.produce() with wrong arguments rejects with TypeError', async () => {
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.webRtcTransport1!.produce({
 					// @ts-expect-error --- Testing purposes.
 					kind: 'chicken',
 					// @ts-expect-error --- Testing purposes.
 					rtpParameters: {},
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.webRtcTransport1!.produce({
 					kind: 'audio',
 					// @ts-expect-error --- Testing purposes.
 					rtpParameters: {},
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
 			// Invalid ssrc.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.webRtcTransport1!.produce({
 					kind: 'audio',
 					rtpParameters: {
@@ -301,10 +301,10 @@ export default function(mediasoup): void
 						rtcp: { cname: 'qwerty' },
 					},
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
 			// Missing or empty rtpParameters.encodings.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.webRtcTransport1!.produce({
 					kind: 'video',
 					rtpParameters: {
@@ -330,10 +330,10 @@ export default function(mediasoup): void
 						rtcp: { cname: 'qwerty' },
 					},
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
 			// Wrong apt in RTX codec.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.webRtcTransport1!.produce({
 					kind: 'audio',
 					rtpParameters: {
@@ -361,11 +361,11 @@ export default function(mediasoup): void
 						},
 					},
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 		}, 2000);
 
-		test('webRtcTransport1.produce() with unsupported codecs rejects with /*Unsupported*/Error', async () => {
-			await expect(
+		test('webRtcTransport1.produce() with unsupported codecs rejects with UnsupportedError', async () => {
+			await utils.expect_rejects_toThrow(
 				ctx.webRtcTransport1!.produce({
 					kind: 'audio',
 					rtpParameters: {
@@ -381,10 +381,10 @@ export default function(mediasoup): void
 						rtcp: { cname: 'audio' },
 					},
 				})
-			).rejects.toThrow(/*Unsupported*/Error);
+			, 'UnsupportedError');
 
 			// Invalid H264 profile-level-id.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.webRtcTransport1!.produce({
 					kind: 'video',
 					rtpParameters: {
@@ -409,7 +409,7 @@ export default function(mediasoup): void
 						encodings: [{ ssrc: 6666, rtx: { ssrc: 6667 } }],
 					},
 				})
-			).rejects.toThrow(/*Unsupported*/Error);
+			, 'UnsupportedError');
 		}, 2000);
 
 		test('transport.produce() with already used MID or SSRC rejects with Error', async () => {
@@ -459,19 +459,19 @@ export default function(mediasoup): void
 
 			await ctx.webRtcTransport1!.produce(audioProducerOptions);
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.webRtcTransport1!.produce(audioProducerOptions)
-			).rejects.toThrow(Error);
+			, 'Error');
 
 			await ctx.webRtcTransport2!.produce(videoProducerOptions);
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.webRtcTransport2!.produce(videoProducerOptions)
-			).rejects.toThrow(Error);
+			, 'Error');
 		}, 2000);
 
 		test('transport.produce() with no MID and with single encoding without RID or SSRC rejects with Error', async () => {
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.webRtcTransport1!.produce({
 					kind: 'audio',
 					rtpParameters: {
@@ -486,7 +486,7 @@ export default function(mediasoup): void
 						encodings: [{}],
 					},
 				})
-			).rejects.toThrow(Error);
+			, 'Error');
 		}, 2000);
 
 		test('producer.dump() succeeds', async () => {
@@ -711,17 +711,15 @@ export default function(mediasoup): void
 			);
 
 			// @ts-expect-error --- Testing purposes.
-			await expect(audioProducer.enableTraceEvent(123)).rejects.toThrow(TypeError);
+			await utils.expect_rejects_toThrow(audioProducer.enableTraceEvent(123), 'TypeError');
 
 			// @ts-expect-error --- Testing purposes.
-			await expect(audioProducer.enableTraceEvent('rtp')).rejects.toThrow(
-				TypeError
-			);
+			await utils.expect_rejects_toThrow(audioProducer.enableTraceEvent('rtp'), 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				// @ts-expect-error --- Testing purposes.
 				audioProducer.enableTraceEvent(['fir', 123.123])
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 		}, 2000);
 
 		test('Producer emits "score"', async () => {
@@ -808,10 +806,10 @@ export default function(mediasoup): void
 
 			audioProducer.close();
 
-			await expect(audioProducer.dump()).rejects.toThrow(Error);
-			await expect(audioProducer.getStats()).rejects.toThrow(Error);
-			await expect(audioProducer.pause()).rejects.toThrow(Error);
-			await expect(audioProducer.resume()).rejects.toThrow(Error);
+			await utils.expect_rejects_toThrow(audioProducer.dump(), 'Error');
+			await utils.expect_rejects_toThrow(audioProducer.getStats(), 'Error');
+			await utils.expect_rejects_toThrow(audioProducer.pause(), 'Error');
+			await utils.expect_rejects_toThrow(audioProducer.resume(), 'Error');
 		}, 2000);
 
 		test('Producer emits "transportclose" if Transport is closed', async () => {

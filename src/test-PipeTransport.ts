@@ -481,9 +481,9 @@ export default function(mediasoup): void
 
 		test('router.createPipeTransport() with wrong arguments rejects with TypeError', async () => {
 			// @ts-expect-error --- Testing purposes.
-			await expect(ctx.router1!.createPipeTransport({})).rejects.toThrow(TypeError);
+			await utils.expect_rejects_toThrow(ctx.router1!.createPipeTransport({}), 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.router1!.createPipeTransport({
 					listenInfo: {
 						protocol: 'udp',
@@ -491,30 +491,30 @@ export default function(mediasoup): void
 						portRange: { min: 4000, max: 3000 },
 					},
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.router1!.createPipeTransport({ listenIp: '123' })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				// @ts-expect-error --- Testing purposes.
 				ctx.router1!.createPipeTransport({ listenIp: ['127.0.0.1'] })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.router1!.createPipeTransport({
 					listenInfo: { protocol: 'tcp', ip: '127.0.0.1' },
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.router1!.createPipeTransport({
 					listenInfo: { protocol: 'udp', ip: '127.0.0.1' },
 					// @ts-expect-error --- Testing purposes.
 					appData: 'NOT-AN-OBJECT',
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 		}, 2000);
 
 		test('router.createPipeTransport() with enableRtx succeeds', async () => {
@@ -646,7 +646,7 @@ export default function(mediasoup): void
 			expect(pipeTransport.srtpParameters).toBeUndefined();
 
 			// No SRTP enabled so passing srtpParameters must fail.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				pipeTransport.connect({
 					ip: '127.0.0.2',
 					port: 9999,
@@ -656,17 +656,17 @@ export default function(mediasoup): void
 							'YTdjcDBvY2JoMGY5YXNlNDc0eDJsdGgwaWRvNnJsamRrdG16aWVpZHphdHo=',
 					},
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
 			// No SRTP enabled so passing srtpParameters (even if invalid) must fail.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				pipeTransport.connect({
 					ip: '127.0.0.2',
 					port: 9999,
 					// @ts-expect-error --- Testing purposes.
 					srtpParameters: 'invalid',
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 		});
 
 		test('pipeTransport.connect() with invalid srtpParameters fails', async () => {
@@ -681,25 +681,25 @@ export default function(mediasoup): void
 			expect(pipeTransport.srtpParameters?.keyBase64.length).toBe(60);
 
 			// Missing srtpParameters.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				pipeTransport.connect({
 					ip: '127.0.0.2',
 					port: 9999,
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
 			// Invalid srtpParameters.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				pipeTransport.connect({
 					ip: '127.0.0.2',
 					port: 9999,
 					// @ts-expect-error --- Testing purposes.
 					srtpParameters: 1,
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
 			// Missing srtpParameters.cryptoSuite.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				pipeTransport.connect({
 					ip: '127.0.0.2',
 					port: 9999,
@@ -709,10 +709,10 @@ export default function(mediasoup): void
 							'YTdjcDBvY2JoMGY5YXNlNDc0eDJsdGgwaWRvNnJsamRrdG16aWVpZHphdHo=',
 					},
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
 			// Missing srtpParameters.keyBase64.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				pipeTransport.connect({
 					ip: '127.0.0.2',
 					port: 9999,
@@ -721,10 +721,10 @@ export default function(mediasoup): void
 						cryptoSuite: 'AEAD_AES_256_GCM',
 					},
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
 			// Invalid srtpParameters.cryptoSuite.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				pipeTransport.connect({
 					ip: '127.0.0.2',
 					port: 9999,
@@ -735,10 +735,10 @@ export default function(mediasoup): void
 							'YTdjcDBvY2JoMGY5YXNlNDc0eDJsdGgwaWRvNnJsamRrdG16aWVpZHphdHo=',
 					},
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
 			// Invalid srtpParameters.cryptoSuite.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				pipeTransport.connect({
 					ip: '127.0.0.2',
 					port: 9999,
@@ -749,10 +749,10 @@ export default function(mediasoup): void
 							'YTdjcDBvY2JoMGY5YXNlNDc0eDJsdGgwaWRvNnJsamRrdG16aWVpZHphdHo=',
 					},
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
 			// Invalid srtpParameters.keyBase64.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				pipeTransport.connect({
 					ip: '127.0.0.2',
 					port: 9999,
@@ -762,7 +762,7 @@ export default function(mediasoup): void
 						keyBase64: [],
 					},
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 		}, 2000);
 
 		test('router.createPipeTransport() with fixed port succeeds', async () => {
@@ -852,7 +852,7 @@ export default function(mediasoup): void
 
 			// We need to obtain the pipeProducer to await for its 'puase' and 'resume'
 			// events, otherwise we may get errors like this:
-			// /*InvalidState*/Error: Channel closed, pending request aborted [method:PRODUCER_PAUSE, id:8]
+			// InvalidStateError: Channel closed, pending request aborted [method:PRODUCER_PAUSE, id:8]
 			// See related fixed issue:
 			// https://github.com/versatica/mediasoup/issues/1374
 			const { pipeProducer: pipeVideoProducer } = await ctx.router1!.pipeToRouter({
@@ -928,12 +928,12 @@ export default function(mediasoup): void
 				mediaCodecs: ctx.mediaCodecs,
 			});
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.router1!.pipeToRouter({
 					producerId: ctx.videoProducer!.id,
 					router: router1bis,
 				})
-			).rejects.toThrow(Error);
+			, 'Error');
 		}, 2000);
 
 		test('router.pipeToRouter() succeeds with data', async () => {

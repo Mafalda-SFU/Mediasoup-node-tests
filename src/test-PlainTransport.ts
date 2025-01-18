@@ -176,9 +176,9 @@ export default function(mediasoup): void
 
 		test('router.createPlainTransport() with wrong arguments rejects with TypeError', async () => {
 			// @ts-expect-error --- Testing purposes.
-			await expect(ctx.router!.createPlainTransport({})).rejects.toThrow(TypeError);
+			await utils.expect_rejects_toThrow(ctx.router!.createPlainTransport({}), 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.router!.createPlainTransport({
 					listenInfo: {
 						protocol: 'udp',
@@ -186,30 +186,30 @@ export default function(mediasoup): void
 						portRange: { min: 4000, max: 3000 },
 					},
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.router!.createPlainTransport({ listenIp: '123' })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				// @ts-expect-error --- Testing purposes.
 				ctx.router!.createPlainTransport({ listenIp: ['127.0.0.1'] })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.router!.createPlainTransport({
 					listenInfo: { protocol: 'tcp', ip: '127.0.0.1' },
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.router!.createPlainTransport({
 					listenInfo: { protocol: 'udp', ip: '127.0.0.1' },
 					// @ts-expect-error --- Testing purposes.
 					appData: 'NOT-AN-OBJECT',
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 		}, 2000);
 
 		test('router.createPlainTransport() with enableSrtp succeeds', async () => {
@@ -227,25 +227,25 @@ export default function(mediasoup): void
 			expect(plainTransport.srtpParameters?.keyBase64.length).toBe(40);
 
 			// Missing srtpParameters.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				plainTransport.connect({
 					ip: '127.0.0.2',
 					port: 9999,
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
 			// Invalid srtpParameters.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				plainTransport.connect({
 					ip: '127.0.0.2',
 					port: 9999,
 					// @ts-expect-error --- Testing purposes.
 					srtpParameters: 1,
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
 			// Missing srtpParameters.cryptoSuite.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				plainTransport.connect({
 					ip: '127.0.0.2',
 					port: 9999,
@@ -254,10 +254,10 @@ export default function(mediasoup): void
 						keyBase64: 'ZnQ3eWJraDg0d3ZoYzM5cXN1Y2pnaHU5NWxrZTVv',
 					},
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
 			// Missing srtpParameters.keyBase64.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				plainTransport.connect({
 					ip: '127.0.0.2',
 					port: 9999,
@@ -266,10 +266,10 @@ export default function(mediasoup): void
 						cryptoSuite: 'AES_CM_128_HMAC_SHA1_80',
 					},
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
 			// Invalid srtpParameters.cryptoSuite.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				plainTransport.connect({
 					ip: '127.0.0.2',
 					port: 9999,
@@ -279,10 +279,10 @@ export default function(mediasoup): void
 						keyBase64: 'ZnQ3eWJraDg0d3ZoYzM5cXN1Y2pnaHU5NWxrZTVv',
 					},
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
 			// Invalid srtpParameters.cryptoSuite.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				plainTransport.connect({
 					ip: '127.0.0.2',
 					port: 9999,
@@ -292,10 +292,10 @@ export default function(mediasoup): void
 						keyBase64: 'ZnQ3eWJraDg0d3ZoYzM5cXN1Y2pnaHU5NWxrZTVv',
 					},
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
 			// Invalid srtpParameters.keyBase64.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				plainTransport.connect({
 					ip: '127.0.0.2',
 					port: 9999,
@@ -305,7 +305,7 @@ export default function(mediasoup): void
 						keyBase64: [],
 					},
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
 			// Valid srtpParameters. And let's update the crypto suite.
 			await expect(
@@ -325,9 +325,9 @@ export default function(mediasoup): void
 		}, 2000);
 
 		test('router.createPlainTransport() with non bindable IP rejects with Error', async () => {
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.router!.createPlainTransport({ listenIp: '8.8.8.8' })
-			).rejects.toThrow(Error);
+			, 'Error');
 		}, 2000);
 
 		if (!IS_WINDOWS) {
@@ -382,7 +382,7 @@ export default function(mediasoup): void
 					})
 				).resolves.toBeDefined();
 
-				await expect(
+				await utils.expect_rejects_toThrow(
 					ctx.router!.createPlainTransport({
 						listenInfo: {
 							protocol: 'udp',
@@ -391,7 +391,7 @@ export default function(mediasoup): void
 							flags: { udpReusePort: false },
 						},
 					})
-				).rejects.toThrow();
+				, '');
 			}, 2000);
 		}
 
@@ -441,9 +441,9 @@ export default function(mediasoup): void
 			).resolves.toBeUndefined();
 
 			// Must fail if connected.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				plainTransport.connect({ ip: '1.2.3.4', port: 1234, rtcpPort: 1235 })
-			).rejects.toThrow(Error);
+			, 'Error');
 
 			expect(plainTransport.tuple.remoteIp).toBe('1.2.3.4');
 			expect(plainTransport.tuple.remotePort).toBe(1234);
@@ -460,7 +460,7 @@ export default function(mediasoup): void
 			});
 
 			// No SRTP enabled so passing srtpParameters must fail.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				plainTransport.connect({
 					ip: '127.0.0.2',
 					port: 9998,
@@ -470,33 +470,31 @@ export default function(mediasoup): void
 						keyBase64: 'ZnQ3eWJraDg0d3ZoYzM5cXN1Y2pnaHU5NWxrZTVv',
 					},
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
-			await expect(plainTransport.connect({})).rejects.toThrow(TypeError);
+			await utils.expect_rejects_toThrow(plainTransport.connect({}), 'TypeError');
 
-			await expect(plainTransport.connect({ ip: '::::1234' })).rejects.toThrow(
-				TypeError
-			);
+			await utils.expect_rejects_toThrow(plainTransport.connect({ ip: '::::1234' }), 'TypeError');
 
 			// Must fail because transport has rtcpMux: false so rtcpPort must be given
 			// in connect().
-			await expect(
+			await utils.expect_rejects_toThrow(
 				plainTransport.connect({
 					ip: '127.0.0.1',
 					port: 1234,
 					// @ts-expect-error --- Testing purposes.
 					__rtcpPort: 1235,
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				plainTransport.connect({
 					ip: '127.0.0.1',
 					// @ts-expect-error --- Testing purposes.
 					__port: 'chicken',
 					rtcpPort: 1235,
 				})
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 		}, 2000);
 
 		test('PlainTransport methods reject if closed', async () => {
@@ -512,11 +510,11 @@ export default function(mediasoup): void
 			expect(onObserverClose).toHaveBeenCalledTimes(1);
 			expect(plainTransport.closed).toBe(true);
 
-			await expect(plainTransport.dump()).rejects.toThrow(Error);
+			await utils.expect_rejects_toThrow(plainTransport.dump(), 'Error');
 
-			await expect(plainTransport.getStats()).rejects.toThrow(Error);
+			await utils.expect_rejects_toThrow(plainTransport.getStats(), 'Error');
 
-			await expect(plainTransport.connect({})).rejects.toThrow(Error);
+			await utils.expect_rejects_toThrow(plainTransport.connect({}), 'Error');
 		}, 2000);
 
 		test('router.createPlainTransport() with fixed port succeeds', async () => {

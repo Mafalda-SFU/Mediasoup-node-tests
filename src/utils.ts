@@ -20,3 +20,48 @@ export function deepFreeze<T>(object: T): T
 
   return Object.freeze(object);
 }
+
+export async function expect_rejects_toThrow(expression, errorMessage?: string): Promise<void>
+{
+  try
+  {
+    await expression;
+  }
+  catch (error)
+  {
+    if (!errorMessage || error.toString().includes(errorMessage)) return;
+
+    throw error;
+  }
+
+  throw new Error('Expression did not throw');
+}
+
+export function expect_not_toThrow(fn: () => void, errorMessage?: string): void
+{
+  try
+  {
+    fn();
+  }
+  catch (error)
+  {
+    if(!errorMessage || error.toString().includes(errorMessage)) throw error;
+  }
+}
+
+export function expect_toThrow(fn: () => void, errorMessage?: string): void
+{
+  try
+  {
+    fn();
+  }
+  catch (error)
+  {
+    if (!errorMessage || error.toString().includes(errorMessage)) return;
+
+    console.log(error, error.name, error.toString(), errorMessage);
+    throw error;
+  }
+
+  throw new Error('Function did not throw');
+}

@@ -74,7 +74,7 @@ export default function(mediasoup): void
 			expect(Array.isArray(router.rtpCapabilities.headerExtensions)).toBe(true);
 			expect(router.appData).toEqual({ foo: 123 });
 
-			expect(() => (router.appData = { foo: 222, bar: 'BBB' })).not.toThrow();
+			utils.expect_not_toThrow(() => (router.appData = { foo: 222, bar: 'BBB' }), '');
 
 			await expect(ctx.worker!.dump()).resolves.toMatchObject({
 				pid: ctx.worker!.pid,
@@ -110,22 +110,20 @@ export default function(mediasoup): void
 
 		test('worker.createRouter() with wrong arguments rejects with TypeError', async () => {
 			// @ts-expect-error --- Testing purposes.
-			await expect(ctx.worker!.createRouter({ mediaCodecs: {} })).rejects.toThrow(
-				TypeError
-			);
+			await utils.expect_rejects_toThrow(ctx.worker!.createRouter({ mediaCodecs: {} }), 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				// @ts-expect-error --- Testing purposes.
 				ctx.worker!.createRouter({ appData: 'NOT-AN-OBJECT' })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 		}, 2000);
 
-		test('worker.createRouter() rejects with /*InvalidState*/Error if Worker is closed', async () => {
+		test('worker.createRouter() rejects with InvalidStateError if Worker is closed', async () => {
 			ctx.worker!.close();
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.worker!.createRouter({ mediaCodecs: ctx.mediaCodecs })
-			).rejects.toThrow(/*InvalidState*/Error);
+			, 'InvalidStateError');
 		}, 2000);
 
 		test('router.close() succeeds', async () => {

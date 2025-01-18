@@ -168,7 +168,7 @@ export default function(mediasoup): void
 		}, 2000);
 
 		test('fails to produce wrong parameters', async () => {
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.webRtcTransport!.produce({
 					kind: 'audio',
 					rtpParameters: {
@@ -188,9 +188,9 @@ export default function(mediasoup): void
 						],
 					},
 				})
-			).rejects.toThrow(/*Unsupported*/Error);
+			, 'UnsupportedError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.webRtcTransport!.produce({
 					kind: 'audio',
 					rtpParameters: {
@@ -210,7 +210,7 @@ export default function(mediasoup): void
 						],
 					},
 				})
-			).rejects.toThrow(/*Unsupported*/Error);
+			, 'UnsupportedError');
 		}, 2000);
 
 		test('fails to consume wrong channels', async () => {
@@ -242,12 +242,12 @@ export default function(mediasoup): void
 				})
 			).toBe(true);
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.webRtcTransport!.consume({
 					producerId: audioProducer.id,
 					rtpCapabilities: localConsumerDeviceCapabilities,
 				})
-			).rejects.toThrow(Error);
+			, 'Error');
 		}, 2000);
 	});
 }

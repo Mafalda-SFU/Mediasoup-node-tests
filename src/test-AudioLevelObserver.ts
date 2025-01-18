@@ -61,28 +61,28 @@ export default function(mediasoup): void
 		}, 2000);
 
 		test('router.createAudioLevelObserver() with wrong arguments rejects with TypeError', async () => {
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.router!.createAudioLevelObserver({ maxEntries: 0 })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				ctx.router!.createAudioLevelObserver({ maxEntries: -10 })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				// @ts-expect-error --- Testing purposes.
 				ctx.router!.createAudioLevelObserver({ threshold: 'foo' })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				// @ts-expect-error --- Testing purposes.
 				ctx.router!.createAudioLevelObserver({ interval: false })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				// @ts-expect-error --- Testing purposes.
 				ctx.router!.createAudioLevelObserver({ appData: 'NOT-AN-OBJECT' })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 		}, 2000);
 
 		test('audioLevelObserver.pause() and resume() succeed', async () => {

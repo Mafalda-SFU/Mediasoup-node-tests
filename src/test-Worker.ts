@@ -4,6 +4,8 @@ import * as path from 'node:path';
 import { enhancedOnce } from './enhancedEvents';
 import type { WorkerEvents } from '../types';
 
+import * as utils from './utils'
+
 const skipIfHasVirtualPids =
   process.env.HAS_VIRTUAL_PIDS
     ? test.skip
@@ -90,31 +92,29 @@ export default function(mediasoup): void
 
 		test('createWorker() with wrong settings rejects with TypeError', async () => {
 			// @ts-expect-error --- Testing purposes.
-			await expect(mediasoup.createWorker({ logLevel: 'chicken' })).rejects.toThrow(
-				TypeError
-			);
+			await utils.expect_rejects_toThrow(mediasoup.createWorker({ logLevel: 'chicken' }), 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				mediasoup.createWorker({ rtcMinPort: 1000, rtcMaxPort: 999 })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
 			// Port is from 0 to 65535.
-			await expect(
+			await utils.expect_rejects_toThrow(
 				mediasoup.createWorker({ rtcMinPort: 1000, rtcMaxPort: 65536 })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				mediasoup.createWorker({ dtlsCertificateFile: '/notfound/cert.pem' })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				mediasoup.createWorker({ dtlsPrivateKeyFile: '/notfound/priv.pem' })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 
-			await expect(
+			await utils.expect_rejects_toThrow(
 				// @ts-expect-error --- Testing purposes.
 				mediasoup.createWorker({ appData: 'NOT-AN-OBJECT' })
-			).rejects.toThrow(TypeError);
+			, 'TypeError');
 		}, 2000);
 
 		test('worker.updateSettings() succeeds', async () => {
@@ -133,25 +133,21 @@ export default function(mediasoup): void
 			const worker = await mediasoup.createWorker();
 
 			// @ts-expect-error --- Testing purposes.
-			await expect(worker.updateSettings({ logLevel: 'chicken' })).rejects.toThrow(
-				TypeError
-			);
+			await utils.expect_rejects_toThrow(worker.updateSettings({ logLevel: 'chicken' }), 'TypeError');
 
 			worker.close();
 
 			await enhancedOnce<WorkerEvents>(worker, 'subprocessclose');
 		}, 2000);
 
-		test('worker.updateSettings() rejects with /*InvalidState*/Error if closed', async () => {
+		test('worker.updateSettings() rejects with InvalidStateError if closed', async () => {
 			const worker = await mediasoup.createWorker();
 
 			worker.close();
 
 			await enhancedOnce<WorkerEvents>(worker, 'subprocessclose');
 
-			await expect(worker.updateSettings({ logLevel: 'error' })).rejects.toThrow(
-				/*InvalidState*/Error
-			);
+			await utils.expect_rejects_toThrow(worker.updateSettings({ logLevel: 'error' }), 'InvalidStateError');
 		}, 2000);
 
 		test('worker.dump() succeeds', async () => {
@@ -170,14 +166,14 @@ export default function(mediasoup): void
 			worker.close();
 		}, 2000);
 
-		test('worker.dump() rejects with /*InvalidState*/Error if closed', async () => {
+		test('worker.dump() rejects with InvalidStateError if closed', async () => {
 			const worker = await mediasoup.createWorker();
 
 			worker.close();
 
 			await enhancedOnce<WorkerEvents>(worker, 'subprocessclose');
 
-			await expect(worker.dump()).rejects.toThrow(/*InvalidState*/Error);
+			await utils.expect_rejects_toThrow(worker.dump(), 'InvalidStateError');
 		}, 2000);
 
 		test('worker.getResourceUsage() succeeds', async () => {
