@@ -1,4 +1,3 @@
-import { ok } from 'node:assert';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { enhancedOnce } from './enhancedEvents';
@@ -10,39 +9,17 @@ export default function(mediasoup): void
 {
 	describe('mediasoup', () =>
 	{
-		let {version: pkgVersion} = JSON.parse(
+		const PKG = JSON.parse(
 			fs.readFileSync(path.join(sync(__dirname), 'package.json'), {
 				encoding: 'utf-8',
 			})
 		);
 
-		// If version is a pre-release, get the previous version
-		if(pkgVersion.includes('-'))
-		{
-			let [major, minor, patch] = pkgVersion.split('-')[0].split('.')
-
-			patch = parseInt(patch)
-			if(patch) patch -= 1
-			else
-			{
-				minor = parseInt(minor)
-				if(minor) minor -= 1
-				else
-				{
-					major = parseInt(major)
-					ok(major, 'Invalid version')
-					major -= 1
-				}
-			}
-
-			pkgVersion = `${major}.${minor}.${patch}`
-		}
-
 		const { version, getSupportedRtpCapabilities, parseScalabilityMode } =
 			mediasoup;
 
 		test('mediasoup.version matches version field in package.json', () => {
-			expect(version).toBe(pkgVersion);
+			expect(version).toBe(PKG.version);
 		});
 
 		test('setLoggerEventListeners() works', async () => {
