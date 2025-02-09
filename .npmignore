@@ -1,7 +1,9 @@
 .github/
+.husky/
 __tests__/
+coverage/
 scripts/
 src/
 *.tgz
+jest.config.json
 tsconfig.json
-.husky/

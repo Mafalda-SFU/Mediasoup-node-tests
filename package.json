@@ -13,6 +13,7 @@
     "build:flatbuffers_gen": "rm -rf gen/ && mkdir -p gen/ && cp -R node_modules/mediasoup/node/lib/fbs/ gen/",
     "build:typescript": "tsc 1> /dev/null",
     "prepare": "husky && npm run build",
+    "pretest": "npm run build",
     "test": "jest"
   },
   "keywords": [
