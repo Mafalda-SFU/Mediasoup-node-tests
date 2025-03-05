@@ -146,18 +146,20 @@ export default function(mediasoup): void
 					await dataConsumer.resume();
 				}
 
+				let messageSize: number;
+
 				// Send string (WebRTC DataChannel string).
 				if (id < numMessages / 2) {
 					message = String(id);
+					messageSize = Buffer.from(message).byteLength;
 				}
 				// Send string (WebRTC DataChannel binary).
 				else {
 					message = Buffer.from(String(id));
+					messageSize = message.byteLength;
 				}
 
 				dataProducer.send(message);
-
-				const messageSize = Buffer.from(message).byteLength;
 
 				sentMessageBytes += messageSize;
 
