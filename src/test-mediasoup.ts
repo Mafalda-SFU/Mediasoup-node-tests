@@ -22,7 +22,7 @@ export default function(mediasoup): void
 			expect(version).toBe(PKG.version);
 		});
 
-		test('setLoggerEventListeners() works', async () => {
+		test('mediasoup.setLoggerEventListeners() succeeds', async () => {
 			const onDebug = jest.fn();
 
 			mediasoup.setLogEventListeners({
@@ -57,7 +57,7 @@ export default function(mediasoup): void
 			expect(rtpCapabilities2).not.toEqual(rtpCapabilities);
 		});
 
-		test('parseScalabilityMode() works', () => {
+		test('mediasoup.parseScalabilityMode() succeeds', () => {
 			expect(parseScalabilityMode('L1T3')).toEqual({
 				spatialLayers: 1,
 				temporalLayers: 3,

@@ -15,7 +15,7 @@ export default function(mediasoup): void
 {
 	describe('Worker', () =>
 	{
-		test('Worker.workerBin matches mediasoup-worker absolute path', () => {
+		test('mediasoup.workerBin matches mediasoup-worker absolute path', () => {
 			const workerBin = process.env.MEDIASOUP_WORKER_BIN
 				? process.env.MEDIASOUP_WORKER_BIN
 				: process.env.MEDIASOUP_BUILDTYPE === 'Debug'
@@ -43,7 +43,7 @@ export default function(mediasoup): void
 			expect(mediasoup.workerBin).toBe(workerBin);
 		});
 
-		test('createWorker() succeeds', async () => {
+		test('mediasoup.createWorker() succeeds', async () => {
 			const onObserverNewWorker = jest.fn();
 
 			mediasoup.observer.once('newworker', onObserverNewWorker);
@@ -90,7 +90,7 @@ export default function(mediasoup): void
 			expect(worker2.died).toBe(false);
 		}, 2000);
 
-		test('createWorker() with wrong settings rejects with TypeError', async () => {
+		test('mediasoup.createWorker() with wrong settings rejects with TypeError', async () => {
 			// @ts-expect-error --- Testing purposes.
 			await utils.expect_rejects_toThrow(mediasoup.createWorker({ logLevel: 'chicken' }), 'TypeError');
 
@@ -200,7 +200,7 @@ export default function(mediasoup): void
 			expect(worker.died).toBe(false);
 		}, 2000);
 
-		skipIfHasVirtualPids('Worker emits "died" if worker process died unexpectedly', async () => {
+		test('Worker emits "died" if mediasoup-worker process died unexpectedly', async () => {
 			let onDied: ReturnType<typeof jest.fn>;
 			let onObserverClose: ReturnType<typeof jest.fn>;
 
@@ -310,7 +310,7 @@ export default function(mediasoup): void
 		// Windows doesn't have some signals such as SIGPIPE, SIGALRM, SIGUSR1, SIGUSR2
 		// so we just skip this test in Windows.
 		if (os.platform() !== 'win32') {
-			skipIfHasVirtualPids('worker process ignores PIPE, HUP, ALRM, USR1 and USR2 signals', async () => {
+			skipIfHasVirtualPids('mediasoup-worker process ignores PIPE, HUP, ALRM, USR1 and USR2 signals', async () => {
 				const worker = await mediasoup.createWorker({ logLevel: 'warn' });
 
 				await new Promise<void>((resolve, reject) => {
@@ -325,11 +325,11 @@ export default function(mediasoup): void
 					setTimeout(() => {
 						expect(worker.closed).toBe(false);
 
-						worker.close();
 						worker.on('subprocessclose', resolve);
+						worker.close();
 					}, 2000);
 				});
-			}, 3000);
+			}, 4000);
 		}
 	});
 }
