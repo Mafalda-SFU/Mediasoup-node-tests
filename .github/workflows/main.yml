@@ -6,12 +6,26 @@ on:
       - main
 
 jobs:
-  test:
-    uses: mafalda-sfu/workflows/.github/workflows/main-no_coverage.yml@v1
+  main_and_schedule:
+    uses: mafalda-sfu/workflows/.github/workflows/main+schedule.yml@v1
 
     with:
+      code-coverage_gistID: ${{ vars.CODE_COVERAGE_GIST_ID }}
+      dependencies-update-latest: "@mafalda-sfu/* mediasoup"
+      destination-github-username: Mafalda-SFU
+      destination-repository-name: Mafalda-SFU.github.io
+      docs-coverage_gistID: ${{ vars.DOCS_COVERAGE_GIST_ID }}
       node-version: lts/-1
+      reference-package-name: "@mafalda-sfu/mediasoup-ortc"
       registry-url: https://npm.pkg.github.com
+      user-email: bot@mafalda.io
+      user-name: Mafalda Bot
+
+      # Publish GitHub Packages Registry
+      gpr-npm-version_gistID: ${{ vars.GPR_NPM_VERSION_GIST_ID }}
 
     secrets:
+      GIST_SECRET: ${{ secrets.GIST_SECRET }}
       NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
