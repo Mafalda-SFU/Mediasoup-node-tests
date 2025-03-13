@@ -142,12 +142,8 @@ function importUtils(line)
 }
 
 
-const {argv: [,, version]} = process;
-if(!version?.length)
-{
-  console.error('Usage: update.js <version>')
-  process.exit(1)
-}
+let {argv: [,, version]} = process
+if(!version?.length) ({version} = require('../package.json'));
 
 
 (async function()
