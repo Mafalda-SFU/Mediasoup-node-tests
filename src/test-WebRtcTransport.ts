@@ -14,7 +14,7 @@ import {
 import * as FbsTransport from '@mafalda-sfu/mediasoup-node-fbs/transport';
 import * as FbsWebRtcTransport from '@mafalda-sfu/mediasoup-node-fbs/web-rtc-transport';
 
-export default function(mediasoup): void
+export default function(mediasoup: Index): void
 {
 	describe('WebRtcTransport', () =>
 	{

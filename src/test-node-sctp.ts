@@ -4,7 +4,7 @@ import * as sctp from 'sctp';
 import { enhancedOnce } from './enhancedEvents';
 import type { WorkerEvents } from '../types';
 
-export default function(mediasoup): void
+export default function(mediasoup: Index): void
 {
 	describe('node-sctp', () =>
 	{

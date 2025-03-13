@@ -11,7 +11,7 @@ const skipIfHasVirtualPids =
     ? test.skip
     : test
 
-export default function(mediasoup): void
+export default function(mediasoup: Index): void
 {
 	describe('Worker', () =>
 	{

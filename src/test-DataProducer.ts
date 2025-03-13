@@ -2,7 +2,7 @@ import { enhancedOnce } from './enhancedEvents';
 import type { WorkerEvents, DataProducerEvents } from '../types';
 import * as utils from './utils';
 
-export default function(mediasoup): void
+export default function(mediasoup: Index): void
 {
 	describe('DataProducer', () =>
 	{

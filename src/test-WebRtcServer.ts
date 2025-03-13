@@ -7,7 +7,7 @@ import type { RouterImpl } from '../Router';
 
 import * as utils from './utils'
 
-export default function(mediasoup): void
+export default function(mediasoup: Index): void
 {
 	describe('WebRtcServer', () =>
 	{

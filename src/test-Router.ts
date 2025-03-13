@@ -3,7 +3,7 @@ import type { WorkerImpl } from '../Worker';
 import type { WorkerEvents, RouterEvents } from '../types';
 import * as utils from './utils';
 
-export default function(mediasoup): void
+export default function(mediasoup: Index): void
 {
 	describe('Router', () =>
 	{

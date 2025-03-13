@@ -335,6 +335,7 @@ if(!version?.length) ({version} = require('../package.json'));
                   if(describeName === 'mediasoup')
                   {
                     content.push("import {sync} from 'pkg-dir'")
+                    content.push("import type {Index} from '../indexTypes'")
 
                     content.push('')
                   }
@@ -356,9 +357,9 @@ if(!version?.length) ({version} = require('../package.json'));
                     content.push('')
                   }
 
-                  // TODO: generate type for `mediasoup`, or use
-                  //       `typeof mediasoup`. It's only needed for Typescript
-                  content.push('export default function(mediasoup): void')
+                  content.push(
+                    'export default function(mediasoup: Index): void'
+                  )
                   content.push('{')
 
                   content.push(`\tdescribe('${describeName}', () =>`)

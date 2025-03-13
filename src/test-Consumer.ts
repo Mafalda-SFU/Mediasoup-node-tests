@@ -10,7 +10,7 @@ import {
 } from '@mafalda-sfu/mediasoup-node-fbs/notification';
 import * as FbsConsumer from '@mafalda-sfu/mediasoup-node-fbs/consumer';
 
-export default function(mediasoup): void
+export default function(mediasoup: Index): void
 {
 	describe('Consumer', () =>
 	{

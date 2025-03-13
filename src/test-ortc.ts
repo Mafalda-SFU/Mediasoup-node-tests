@@ -2,7 +2,7 @@ import * as ortc from '@mafalda-sfu/mediasoup-ortc';
 
 import * as utils from './utils'
 
-export default function(mediasoup): void
+export default function(mediasoup: Index): void
 {
 	describe('ortc', () =>
 	{

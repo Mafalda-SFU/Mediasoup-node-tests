@@ -5,8 +5,9 @@ import { enhancedOnce } from './enhancedEvents';
 import type { WorkerEvents } from '../types';
 
 import {sync} from 'pkg-dir'
+import type {Index} from '../indexTypes'
 
-export default function(mediasoup): void
+export default function(mediasoup: Index): void
 {
 	describe('mediasoup', () =>
 	{
