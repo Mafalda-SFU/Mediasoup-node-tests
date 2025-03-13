@@ -2,8 +2,7 @@ name: main
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   main_and_schedule:
