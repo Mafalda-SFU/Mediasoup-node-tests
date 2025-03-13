@@ -9,11 +9,11 @@ jobs:
     uses: mafalda-sfu/workflows/.github/workflows/main+schedule.yml@v1
 
     with:
-      code-coverage_gistID: ${{ vars.CODE_COVERAGE_GIST_ID }}
+      code-coverage_gistID: ${{ vars.CODE_COVERAGE_GISTID }}
       dependencies-update-latest: "@mafalda-sfu/* mediasoup"
       destination-github-username: Mafalda-SFU
       destination-repository-name: Mafalda-SFU.github.io
-      docs-coverage_gistID: ${{ vars.DOCS_COVERAGE_GIST_ID }}
+      docs-coverage_gistID: ${{ vars.DOCS_COVERAGE_GISTID }}
       node-version: lts/-1
       reference-package-name: "@mafalda-sfu/mediasoup-ortc"
       registry-url: https://npm.pkg.github.com
@@ -21,7 +21,7 @@ jobs:
       user-name: Mafalda Bot
 
       # Publish GitHub Packages Registry
-      gpr-npm-version_gistID: ${{ vars.GPR_NPM_VERSION_GIST_ID }}
+      gpr-npm-version_gistID: ${{ vars.GPR_NPM_VERSION_GISTID }}
 
     secrets:
       GIST_SECRET: ${{ secrets.GIST_SECRET }}
