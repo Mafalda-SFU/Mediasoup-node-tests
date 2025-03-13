@@ -27,7 +27,7 @@
   "dependencies": {
     "@mafalda-sfu/mediasoup-node-fbs": "^3.15.6",
     "@mafalda-sfu/mediasoup-ortc": "^3.15.6",
-    "flatbuffers": "^25.1.24",
+    "flatbuffers": "^25.2.10",
     "pick-port": "^2.1.0",
     "pkg-dir": "~5.0.0",
     "sctp": "^1.0.0"
