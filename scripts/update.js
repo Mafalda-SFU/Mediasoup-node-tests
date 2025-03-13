@@ -379,7 +379,7 @@ if(!version?.length)
 
                 else if(describeName === 'Worker')
                 {
-                  if(line.includes('Worker emits "died" if worker process died')
+                  if(line.includes('Worker emits "died" if mediasoup-worker')
                   || line.includes('worker process ignores PIPE, HUP, ALRM,'))
                     line = line.replace('test', 'skipIfHasVirtualPids')
                 }

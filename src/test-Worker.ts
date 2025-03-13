@@ -200,7 +200,7 @@ export default function(mediasoup): void
 			expect(worker.died).toBe(false);
 		}, 2000);
 
-		test('Worker emits "died" if mediasoup-worker process died unexpectedly', async () => {
+		skipIfHasVirtualPids('Worker emits "died" if mediasoup-worker process died unexpectedly', async () => {
 			let onDied: ReturnType<typeof jest.fn>;
 			let onObserverClose: ReturnType<typeof jest.fn>;
 
