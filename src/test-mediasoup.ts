@@ -1,9 +1,9 @@
-import { ok } from 'node:assert';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { enhancedOnce } from './enhancedEvents';
 import type { WorkerEvents } from '../types';
 
+import { ok } from 'node:assert'
 import {sync} from 'pkg-dir'
 import type {Index} from '../indexTypes'
 

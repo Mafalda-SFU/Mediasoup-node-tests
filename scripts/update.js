@@ -125,6 +125,25 @@ export function expect_toThrow(fn: () => void, errorMessage?: string): void
 
   throw new Error('Function did not throw');
 }`
+const getPreviousVersion = `		// If version is a pre-release, get the previous version
+		if(pkgVersion.includes('-'))
+		{
+			let [major, minor, patch] = pkgVersion.split('-')[0].split('.')
+
+			patch = parseInt(patch)
+			if(patch) patch -= 1
+			else
+			{
+				minor = parseInt(minor)
+				if(minor) minor -= 1
+				else
+				{
+					major = parseInt(major)
+					ok(major, 'Invalid version')
+					major -= 1
+				}
+			}
+`
 
 
 async function createFiles()
@@ -334,6 +353,7 @@ if(!version?.length) ({version} = require('../package.json'));
 
                   if(describeName === 'mediasoup')
                   {
+                    content.push("import { ok } from 'node:assert'")
                     content.push("import {sync} from 'pkg-dir'")
                     content.push("import type {Index} from '../indexTypes'")
 
@@ -366,12 +386,30 @@ if(!version?.length) ({version} = require('../package.json'));
                   content.push('\t{')
                 }
 
-                else if(describeName === 'mediasoup')
+                if(describeName === 'mediasoup')
                 {
-                  if(line.includes('__dirname'))
+                  if(line.includes('const PKG'))
+                    line = line.replace(
+                      "const PKG", 'let {version: pkgVersion}'
+                    )
+
+                  else if(line.includes('__dirname'))
                     line = line.replace(
                       "__dirname, '..', '..', '..'", 'sync(__dirname)'
                     )
+
+                  else if(
+                    line.includes(
+                      'version, getSupportedRtpCapabilities, parseScalabilityMode'
+                    )
+                  )
+                  {
+                    content.push(getPreviousVersion)
+                    content.push("			pkgVersion = `${major}.${minor}.${patch}`\n		}\n")
+                  }
+
+                  else if(line.includes('PKG.version'))
+                    line = line.replace("PKG.version", 'pkgVersion')
                 }
 
                 else if(describeName === 'Worker')
