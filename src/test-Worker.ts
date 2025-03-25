@@ -16,9 +16,9 @@ export default function(mediasoup: Index): void
 	describe('Worker', () =>
 	{
 		test('mediasoup.workerBin matches mediasoup-worker absolute path', () => {
-			const workerBin = process.env.MEDIASOUP_WORKER_BIN
-				? process.env.MEDIASOUP_WORKER_BIN
-				: process.env.MEDIASOUP_BUILDTYPE === 'Debug'
+			const workerBin = process.env['MEDIASOUP_WORKER_BIN']
+				? process.env['MEDIASOUP_WORKER_BIN']
+				: process.env['MEDIASOUP_BUILDTYPE'] === 'Debug'
 					? path.join(
 							__dirname,
 							'..',
