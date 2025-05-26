@@ -55,6 +55,7 @@ export default function(mediasoup: Index): void
 			expect(worker1.constructor.name).toBe('WorkerImpl');
 			expect(typeof worker1.pid).toBe('number');
 			expect(worker1.closed).toBe(false);
+			expect(worker1.subprocessClosed).toBe(false);
 			expect(worker1.died).toBe(false);
 
 			worker1.close();
@@ -62,6 +63,7 @@ export default function(mediasoup: Index): void
 			await enhancedOnce<WorkerEvents>(worker1, 'subprocessclose');
 
 			expect(worker1.closed).toBe(true);
+			expect(worker1.subprocessClosed).toBe(true);
 			expect(worker1.died).toBe(false);
 
 			const worker2 = await mediasoup.createWorker<{ foo: number; bar?: string }>({
@@ -79,6 +81,7 @@ export default function(mediasoup: Index): void
 			expect(worker2.constructor.name).toBe('WorkerImpl');
 			expect(typeof worker2.pid).toBe('number');
 			expect(worker2.closed).toBe(false);
+			expect(worker2.subprocessClosed).toBe(false);
 			expect(worker2.died).toBe(false);
 			expect(worker2.appData).toEqual({ foo: 456 });
 
@@ -87,6 +90,7 @@ export default function(mediasoup: Index): void
 			await enhancedOnce<WorkerEvents>(worker2, 'subprocessclose');
 
 			expect(worker2.closed).toBe(true);
+			expect(worker2.subprocessClosed).toBe(true);
 			expect(worker2.died).toBe(false);
 		}, 2000);
 
@@ -197,6 +201,7 @@ export default function(mediasoup: Index): void
 
 			expect(onObserverClose).toHaveBeenCalledTimes(1);
 			expect(worker.closed).toBe(true);
+			expect(worker.subprocessClosed).toBe(true);
 			expect(worker.died).toBe(false);
 		}, 2000);
 
@@ -229,13 +234,10 @@ export default function(mediasoup: Index): void
 				process.kill(worker1.pid, 'SIGINT');
 			});
 
-			if (!worker1.subprocessClosed) {
-				await enhancedOnce<WorkerEvents>(worker1, 'subprocessclose');
-			}
-
 			expect(onDied).toHaveBeenCalledTimes(1);
 			expect(onObserverClose).toHaveBeenCalledTimes(1);
 			expect(worker1.closed).toBe(true);
+			expect(worker1.subprocessClosed).toBe(true);
 			expect(worker1.died).toBe(true);
 
 			const worker2 = await mediasoup.createWorker({ logLevel: 'warn' });
@@ -263,13 +265,10 @@ export default function(mediasoup: Index): void
 				process.kill(worker2.pid, 'SIGTERM');
 			});
 
-			if (!worker2.subprocessClosed) {
-				await enhancedOnce<WorkerEvents>(worker2, 'subprocessclose');
-			}
-
 			expect(onDied).toHaveBeenCalledTimes(1);
 			expect(onObserverClose).toHaveBeenCalledTimes(1);
 			expect(worker2.closed).toBe(true);
+			expect(worker2.subprocessClosed).toBe(true);
 			expect(worker2.died).toBe(true);
 
 			const worker3 = await mediasoup.createWorker({ logLevel: 'warn' });
@@ -297,13 +296,10 @@ export default function(mediasoup: Index): void
 				process.kill(worker3.pid, 'SIGKILL');
 			});
 
-			if (!worker3.subprocessClosed) {
-				await enhancedOnce<WorkerEvents>(worker3, 'subprocessclose');
-			}
-
 			expect(onDied).toHaveBeenCalledTimes(1);
 			expect(onObserverClose).toHaveBeenCalledTimes(1);
 			expect(worker3.closed).toBe(true);
+			expect(worker3.subprocessClosed).toBe(true);
 			expect(worker3.died).toBe(true);
 		}, 5000);
 
@@ -324,6 +320,8 @@ export default function(mediasoup: Index): void
 
 					setTimeout(() => {
 						expect(worker.closed).toBe(false);
+						expect(worker.subprocessClosed).toBe(false);
+						expect(worker.died).toBe(false);
 
 						worker.on('subprocessclose', resolve);
 						worker.close();
