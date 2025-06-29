@@ -1,6 +1,6 @@
 {
   "name": "@mafalda-sfu/mediasoup-node-tests",
-  "version": "3.16.2",
+  "version": "3.16.3",
   "description": "Node.js tests extracted from Mediasoup",
   "exports": {
     ".": "./index.js",
@@ -25,8 +25,8 @@
   "author": "Jesús Leganés-Combarro 'piranna' (https://piranna.github.io)",
   "license": "ISC",
   "dependencies": {
-    "@mafalda-sfu/mediasoup-node-fbs": "^3.16.2",
-    "@mafalda-sfu/mediasoup-ortc": "^3.16.2",
+    "@mafalda-sfu/mediasoup-node-fbs": "^3.16.3",
+    "@mafalda-sfu/mediasoup-ortc": "^3.16.3",
     "flatbuffers": "^25.2.10",
     "pick-port": "^2.1.0",
     "pkg-dir": "~5.0.0",
@@ -37,7 +37,7 @@
     "@types/node": "^22.15.34",
     "husky": "^9.1.7",
     "jest": "^29.7.0",
-    "mediasoup": "3.16.2",
+    "mediasoup": "3.16.3",
     "tar-stream": "^3.1.7",
     "typescript": "^5.8.3"
   },
