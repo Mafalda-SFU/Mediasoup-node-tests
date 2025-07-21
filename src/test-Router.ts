@@ -9,6 +9,7 @@ export default function(mediasoup: Index): void
 	{
 		type TestContext = {
 			mediaCodecs: mediasoup.types.RtpCodecCapability[];
+			unsupportedMediaCodecs: mediasoup.types.RtpCodecCapability[];
 			worker?: mediasoup.types.Worker;
 		};
 
@@ -41,6 +42,21 @@ export default function(mediasoup: Index): void
 					rtcpFeedback: [], // Will be ignored.
 				},
 			]),
+			unsupportedMediaCodecs: utils.deepFreeze<
+				mediasoup.types.RtpCodecCapability[]
+			>([
+				{
+					kind: 'audio',
+					mimeType: 'audio/x-aiff',
+					clockRate: 8000,
+					channels: 1,
+				},
+				{
+					kind: 'video',
+					mimeType: 'video/3gpp',
+					clockRate: 90000,
+				},
+			]),
 		};
 
 		beforeEach(async () => {
@@ -71,6 +87,8 @@ export default function(mediasoup: Index): void
 			expect(router.closed).toBe(false);
 			expect(typeof router.rtpCapabilities).toBe('object');
 			expect(Array.isArray(router.rtpCapabilities.codecs)).toBe(true);
+			// 3 codecs + 2 RTX codecs.
+			expect(router.rtpCapabilities.codecs?.length).toBe(5);
 			expect(Array.isArray(router.rtpCapabilities.headerExtensions)).toBe(true);
 			expect(router.appData).toEqual({ foo: 123 });
 
@@ -108,6 +126,12 @@ export default function(mediasoup: Index): void
 			expect((ctx.worker! as WorkerImpl).routersForTesting.size).toBe(0);
 		}, 2000);
 
+		test('worker.createRouter() with invalid codecs rejects with UnsupportedError', async () => {
+			await utils.expect_rejects_toThrow(
+				ctx.worker!.createRouter({ mediaCodecs: ctx.unsupportedMediaCodecs })
+			, 'UnsupportedError');
+		}, 2000);
+
 		test('worker.createRouter() with wrong arguments rejects with TypeError', async () => {
 			// @ts-expect-error --- Testing purposes.
 			await utils.expect_rejects_toThrow(ctx.worker!.createRouter({ mediaCodecs: {} }), 'TypeError');
@@ -124,6 +148,25 @@ export default function(mediasoup: Index): void
 			await utils.expect_rejects_toThrow(
 				ctx.worker!.createRouter({ mediaCodecs: ctx.mediaCodecs })
 			, 'InvalidStateError');
+		}, 2000);
+
+		test('router.updateMediaCodecs() succeeds', async () => {
+			const router = await ctx.worker!.createRouter({
+				mediaCodecs: ctx.mediaCodecs,
+			});
+
+			expect(typeof router.rtpCapabilities).toBe('object');
+			expect(Array.isArray(router.rtpCapabilities.codecs)).toBe(true);
+			// 3 codecs + 2 RTX codecs.
+			expect(router.rtpCapabilities.codecs?.length).toBe(5);
+			expect(Array.isArray(router.rtpCapabilities.headerExtensions)).toBe(true);
+
+			router.updateMediaCodecs([]);
+
+			expect(typeof router.rtpCapabilities).toBe('object');
+			expect(Array.isArray(router.rtpCapabilities.codecs)).toBe(true);
+			expect(router.rtpCapabilities.codecs?.length).toBe(0);
+			expect(Array.isArray(router.rtpCapabilities.headerExtensions)).toBe(true);
 		}, 2000);
 
 		test('router.close() succeeds', async () => {
